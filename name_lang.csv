@@ -1,5 +1,12 @@
 Name,Languages
 Vu Viet A,"{'Vietnamese': None, 'English': None}"
+Bui Duc A,{'English': None}
+To Quy T,"{'Vietnamese': None, 'English': None}"
+Pham Viet H,"{'Vietnamese': None, 'Japanese': None, 'English': None}"
+Doan Dinh Vu C,"{'Vietnamese': None, 'Japanese': None, 'English': None}"
+Le Huu M,"{'Vietnamese': None, 'English': None}"
+Le Sy Q,"{'Vietnamese': None, 'English': None}"
+Ngo Thach A,"{'Vietnamese': None, 'Japanese': None, 'English': None}"
 Nguyen Phi Hai N,"{'Vietnamese': 'Native', 'English': 'C1 Advance', 'German': 'Deutsche Zertifikat B1'}"
 NGUYEN THI HONG N,"{'Vietnamese': None, 'Japanese': None, 'English': None}"
 Nguyen Hai M,"{'Korean': None, 'English': None}"
@@ -10,14 +17,27 @@ Vu Viet A,"{'Vietnamese': None, 'English': None}"
 Do Van H,{'English': None}
 Luong Van H,{'English': None}
 Nguyen Thanh Ph,{'English': None}
+Nguyen Ha P,"{'Vietnamese': None, 'English': None}"
+Pham Thu T,"{'English': None, 'Korean': None}"
 Tran Thi Kim B,{'English': None}
 Tran Tien D,{}
 Tran Trong N,{}
+Nguyen Phuong C,"{'Vietnamese': None, 'English': None, 'Japanese': None}"
+Luong Van H,{'English': None}
+Nguyen Duyen M,{'English': None}
 Pham Thi H,{'English': None}
 Thai Minh T,"{'Vietnamese': 'Native', 'English': 'Around 700 Toeic'}"
+Tran Nhan T,{'English': None}
 Pham Quang V,"{'Vietnamese': None, 'English': None}"
 Tran Minh K,"{'Vietnamese': 'Native', 'English': 'Intermediate'}"
+Bui Duc A,{'English': None}
 Chu Ngoc M,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5, Toeic: 785'}"
+Hoang Dong H,{'English': None}
+Hoang Thu P,"{'Vietnamese': None, 'English': None}"
+Huynh Thanh T,"{'Vietnamese': None, 'English': None}"
+Nguyen Duc T,"{'Vietnamese': None, 'English': None}"
+Nguyen Gia T,"{'Vietnamese': None, 'English': None}"
+Nguyen Phu Q,"{'Vietnamese': None, 'English': None}"
 Dang The A,"{'Vietnamese': 'Native', 'English': 'Toeic 600'}"
 Do Xuan H,{}
 Bui Manh P,"{'Vietnamese': None, 'English': None}"

@@ -1,5 +1,12 @@
 Name,Languages
 Vu Viet A,"['Vietnamese', 'English']"
+Bui Duc A,English
+To Quy T,"['Vietnamese', 'English']"
+Pham Viet H,"['Vietnamese', 'Japanese', 'English']"
+Doan Dinh Vu C,"['Vietnamese', 'Japanese', 'English']"
+Le Huu M,"['Vietnamese', 'English']"
+Le Sy Q,"['Vietnamese', 'English']"
+Ngo Thach A,"['Vietnamese', 'Japanese', 'English']"
 Nguyen Phi Hai N,"{'Vietnamese': 'Native', 'English': 'C1 Advance', 'German': 'Deutsche Zertifikat B1'}"
 NGUYEN THI HONG N,"['Vietnamese', 'Japanese', 'English']"
 Nguyen Hai M,"['Korean', 'English']"
@@ -10,14 +17,27 @@ Vu Viet A,"['Vietnamese', 'English']"
 Do Van H,English
 Luong Van H,English
 Nguyen Thanh Ph,English
+Nguyen Ha P,"['Vietnamese', 'English']"
+Pham Thu T,"['English', 'Korean']"
 Tran Thi Kim B,English
 Tran Tien D,
 Tran Trong N,
+Nguyen Phuong C,"['Vietnamese', 'English', 'Japanese']"
+Luong Van H,English
+Nguyen Duyen M,English
 Pham Thi H,English
 Thai Minh T,"{'Vietnamese': 'Native', 'English': 'Around 700 Toeic'}"
+Tran Nhan T,English
 Pham Quang V,"['Vietnamese', 'English']"
 Tran Minh K,"[{'Language': 'Vietnamese', 'Level': 'Native'}, {'Language': 'English', 'Level': 'Intermediate'}]"
+Bui Duc A,English
 Chu Ngoc M,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5, Toeic: 785'}"
+Hoang Dong H,English
+Hoang Thu P,"['Vietnamese', 'English']"
+Huynh Thanh T,"['Vietnamese', 'English']"
+Nguyen Duc T,"['Vietnamese', 'English']"
+Nguyen Gia T,"['Vietnamese', 'English']"
+Nguyen Phu Q,"['Vietnamese', 'English']"
 Dang The A,"{'Vietnamese': 'Native', 'English': 'Toeic 600'}"
 Do Xuan H,
 Bui Manh P,"['Vietnamese', 'English']"
