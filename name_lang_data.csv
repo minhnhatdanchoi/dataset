@@ -1,48 +1,48 @@
-Name,Languages
-Vu Viet A,"['Vietnamese', 'English']"
-Bui Duc A,English
-To Quy T,"['Vietnamese', 'English']"
-Pham Viet H,"['Vietnamese', 'Japanese', 'English']"
-Doan Dinh Vu C,"['Vietnamese', 'Japanese', 'English']"
-Le Huu M,"['Vietnamese', 'English']"
-Le Sy Q,"['Vietnamese', 'English']"
-Ngo Thach A,"['Vietnamese', 'Japanese', 'English']"
-Nguyen Phi Hai N,"{'Vietnamese': 'Native', 'English': 'C1 Advance', 'German': 'Deutsche Zertifikat B1'}"
-NGUYEN THI HONG N,"['Vietnamese', 'Japanese', 'English']"
-Nguyen Hai M,"['Korean', 'English']"
-Nguyen Quang H,English
-Pham Thi Minh L,"['Vietnamese', 'Japanese', 'English']"
-Pham Thi Minh L,"['Vietnamese', 'Japanese', 'English']"
-Vu Viet A,"['Vietnamese', 'English']"
-Do Van H,English
-Luong Van H,English
-Nguyen Thanh Ph,English
-Nguyen Ha P,"['Vietnamese', 'English']"
-Pham Thu T,"['English', 'Korean']"
-Tran Thi Kim B,English
-Tran Tien D,
-Tran Trong N,
-Nguyen Phuong C,"['Vietnamese', 'English', 'Japanese']"
-Luong Van H,English
-Nguyen Duyen M,English
-Pham Thi H,English
-Thai Minh T,"{'Vietnamese': 'Native', 'English': 'Around 700 Toeic'}"
-Tran Nhan T,English
-Pham Quang V,"['Vietnamese', 'English']"
-Tran Minh K,"[{'Language': 'Vietnamese', 'Level': 'Native'}, {'Language': 'English', 'Level': 'Intermediate'}]"
-Bui Duc A,English
-Chu Ngoc M,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5, Toeic: 785'}"
-Hoang Dong H,English
-Hoang Thu P,"['Vietnamese', 'English']"
-Huynh Thanh T,"['Vietnamese', 'English']"
-Nguyen Duc T,"['Vietnamese', 'English']"
-Nguyen Gia T,"['Vietnamese', 'English']"
-Nguyen Phu Q,"['Vietnamese', 'English']"
-Dang The A,"{'Vietnamese': 'Native', 'English': 'Toeic 600'}"
-Do Xuan H,
-Bui Manh P,"['Vietnamese', 'English']"
-Nguyen Cong Tuan P,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5'}"
-Luong Ba H,English
-Hoang Dang K,English
-Mai Thanh L,English
-Phuong Xuan T,English
+Name,Nationality,DOB,Sex,Languages
+Vu Viet A,Viet Nam,1993,Male,"['Vietnamese', 'English']"
+Bui Duc A,Viet Nam,1990,Male,English
+To Quy T,Viet Nam,2003,Male,"['Vietnamese', 'English']"
+Pham Viet H,Viet Nam,1993,Male,"['Vietnamese', 'Japanese', 'English']"
+Doan Dinh Vu C,Viet Nam,1997,Male,"['Vietnamese', 'Japanese', 'English']"
+Le Huu M,Viet Nam,1994,Male,"['Vietnamese', 'English']"
+Le Sy Q,Viet Nam,1993,Male,"['Vietnamese', 'English']"
+Ngo Thach A,Viet Nam,1994,Male,"['Vietnamese', 'Japanese', 'English']"
+Nguyen Phi Hai N,Viet Nam,2001,Male,"{'Vietnamese': 'Native', 'English': 'C1 Advance', 'German': 'Deutsche Zertifikat B1'}"
+NGUYEN THI HONG N,Viet Nam,2000,Female,"['Vietnamese', 'Japanese', 'English']"
+Nguyen Hai M,Viet Nam,1996,Female,"['Korean', 'English']"
+Nguyen Quang H,Viet Nam,1997,Male,English
+Pham Thi Minh L,Viet Nam,1992,Female,"['Vietnamese', 'Japanese', 'English']"
+Pham Thi Minh L,Viet Nam,1992,Female,"['Vietnamese', 'Japanese', 'English']"
+Vu Viet A,Viet Nam,1993,Male,"['Vietnamese', 'English']"
+Do Van H,Viet Nam,2001,Male,English
+Luong Van H,Viet Nam,1991,Male,English
+Nguyen Thanh Ph,Viet Nam,1999,Male,English
+Nguyen Ha P,Viet Nam,1990,Male,"['Vietnamese', 'English']"
+Pham Thu T,Viet Nam,2002,Female,"['English', 'Korean']"
+Tran Thi Kim B,Viet Nam,2002,Female,English
+Tran Tien D,Viet Nam,2001,Male,
+Tran Trong N,Viet Nam,1996,Male,
+Nguyen Phuong C,Viet Nam,2001,Female,"['Vietnamese', 'English', 'Japanese']"
+Luong Van H,Viet Nam,1990,Male,English
+Nguyen Duyen M,Viet Nam,1993,Male,English
+Pham Thi H,Viet Nam,1993,Female,English
+Thai Minh T,Viet Nam,2001,Male,"{'Vietnamese': 'Native', 'English': 'Around 700 Toeic'}"
+Tran Nhan T,Viet Nam,1993,Male,English
+Pham Quang V,Viet Nam,2003,Male,"['Vietnamese', 'English']"
+Tran Minh K,Viet Nam,2000,Male,"[{'Language': 'Vietnamese', 'Level': 'Native'}, {'Language': 'English', 'Level': 'Intermediate'}]"
+Bui Duc A,Viet Nam,1990,Male,English
+Chu Ngoc M,Viet Nam,1990,Male,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5, Toeic: 785'}"
+Hoang Dong H,Viet Nam,1998,Male,English
+Hoang Thu P,Viet Nam,2003,Female,"['Vietnamese', 'English']"
+Huynh Thanh T,Viet Nam,2002,Male,"['Vietnamese', 'English']"
+Nguyen Duc T,Viet Nam,2001,Male,"['Vietnamese', 'English']"
+Nguyen Gia T,Viet Nam,1994,Male,"['Vietnamese', 'English']"
+Nguyen Phu Q,Viet Nam,2001,Male,"['Vietnamese', 'English']"
+Dang The A,Viet Nam,1998,Male,"{'Vietnamese': 'Native', 'English': 'Toeic 600'}"
+Do Xuan H,Viet Nam,2002,Male,
+Bui Manh P,Viet Nam,2000,Male,"['Vietnamese', 'English']"
+Nguyen Cong Tuan P,Viet Nam,2000,Male,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5'}"
+Luong Ba H,Viet Nam,2000,Male,English
+Hoang Dang K,Viet Nam,1997,Male,English
+Mai Thanh L,Viet Nam,1998,Male,English
+Phuong Xuan T,Viet Nam,1998,Male,English
