@@ -35,9 +35,11 @@ new
 //e-level
 '''
 LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/5b8c6c03157b088722dd84093d07debc2121ba73/name_lang_seniority.csv' AS row
+
 // Convert the Languages dictionary string to valid JSON
 WITH row, apoc.text.replace(row.Languages, "None", "null") AS temp
 WITH row, apoc.text.replace(temp, "'", "\"") AS langJson
+
 // Convert the JSON string to a map
 WITH row, apoc.convert.fromJsonMap(langJson) AS langMap
 MERGE (e:Employee {name: row.Name})
