@@ -1,0 +1,48 @@
+Name,Nationality,DOB,Sex,Seniority,Languages,Programing Language
+Vu Viet A,Viet Nam,1993,Male,7+ years,"['Vietnamese', 'English']",
+Bui Duc A,Viet Nam,1990,Male,,English,"['Python', 'Bash Script']"
+To Quy T,Viet Nam,2003,Male,< 1 year,"['Vietnamese', 'English']","['Python', 'C++', 'SQL', 'Bash Script', 'Scala', 'HiveSql']"
+Pham Viet H,Viet Nam,1993,Male,5 years,"['Vietnamese', 'Japanese', 'English']","['Python', 'Bash Script']"
+Doan Dinh Vu C,Viet Nam,1997,Male,3.5 years,"['Vietnamese', 'Japanese', 'English']","['Java Spring Boost', 'Java Core', 'C#']"
+Le Huu M,Viet Nam,1994,Male,6+ years,"['Vietnamese', 'English']",
+Le Sy Q,Viet Nam,1993,Male,7+ years,"['Vietnamese', 'English']",
+Ngo Thach A,Viet Nam,1994,Male,2 years,"['Vietnamese', 'Japanese', 'English']",
+Nguyen Phi Hai N,Viet Nam,2001,Male,3+ years,"{'Vietnamese': 'Native', 'English': 'C1 Advance', 'German': 'Deutsche Zertifikat B1'}",
+NGUYEN THI HONG N,Viet Nam,2000,Female,2 years,"['Vietnamese', 'Japanese', 'English']",['HTML/CSS']
+Nguyen Hai M,Viet Nam,1996,Female,~3 years,"['Korean', 'English']",
+Nguyen Quang H,Viet Nam,1997,Male,,English,"['Java', 'Python', 'Bash Script']"
+Pham Thi Minh L,Viet Nam,1992,Female,9 years,"['Vietnamese', 'Japanese', 'English']","['Java', 'Python']"
+Pham Thi Minh L,Viet Nam,1992,Female,9 years,"['Vietnamese', 'Japanese', 'English']","['Java', 'Python']"
+Vu Viet A,Viet Nam,1993,Male,7+ years,"['Vietnamese', 'English']",
+Do Van H,Viet Nam,2001,Male,,English,"['Java', 'Typescript']"
+Luong Van H,Viet Nam,1991,Male,,English,"['Java', 'Python', 'Bash Script', 'Javascript']"
+Nguyen Thanh Ph,Viet Nam,1999,Male,,English,"['PHP', 'VueJs', 'Typescript', 'Javascript']"
+Nguyen Ha P,Viet Nam,1990,Male,5+ years,"['Vietnamese', 'English']","['HTML', 'Java', 'Python']"
+Pham Thu T,Viet Nam,2002,Female,,"['English', 'Korean']",['PHP']
+Tran Thi Kim B,Viet Nam,2002,Female,,English,Java
+Tran Tien D,Viet Nam,2001,Male,,,PHP
+Tran Trong N,Viet Nam,1996,Male,,,"['PHP', 'TypeScript']"
+Nguyen Phuong C,Viet Nam,2001,Female,1 year,"['Vietnamese', 'English', 'Japanese']",
+Luong Van H,Viet Nam,1990,Male,,English,"['Java', 'Python', 'Bash Script', 'C++']"
+Nguyen Duyen M,Viet Nam,1993,Male,,English,PHP
+Pham Thi H,Viet Nam,1993,Female,,English,"['PHP', 'Nodejs', 'Python']"
+Thai Minh T,Viet Nam,2001,Male,1 years,"{'Vietnamese': 'Native', 'English': 'Around 700 Toeic'}",{'Bash Script': 'Medium'}
+Tran Nhan T,Viet Nam,1993,Male,,English,"['Java', 'C', 'C++', 'Kotlin']"
+Pham Quang V,Viet Nam,2003,Male,< 1 year,"['Vietnamese', 'English']","['Python', 'C', 'SQL', 'Java']"
+Tran Minh K,Viet Nam,2000,Male,2 years,"[{'Language': 'Vietnamese', 'Level': 'Native'}, {'Language': 'English', 'Level': 'Intermediate'}]","['Java', 'Javascript', 'Python']"
+Bui Duc A,Viet Nam,1990,Male,,English,"['Python', 'Bash Script']"
+Chu Ngoc M,Viet Nam,1990,Male,4 years,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5, Toeic: 785'}",['Bash Script']
+Hoang Dong H,Viet Nam,1998,Male,,English,Python
+Hoang Thu P,Viet Nam,2003,Female,<1 year,"['Vietnamese', 'English']","['Java', 'Scala', 'HiveSql']"
+Huynh Thanh T,Viet Nam,2002,Male,<1 years,"['Vietnamese', 'English']","['Python', 'Bash Script']"
+Nguyen Duc T,Viet Nam,2001,Male,+3 years,"['Vietnamese', 'English']","['Python', 'Java', 'SQL', 'Bash Script', 'Scala', 'HiveSql']"
+Nguyen Gia T,Viet Nam,1994,Male,4 years,"['Vietnamese', 'English']",['Bash Script']
+Nguyen Phu Q,Viet Nam,2001,Male,2 year,"['Vietnamese', 'English']","['Python', 'Bash Script', 'SQL', 'Java']"
+Dang The A,Viet Nam,1998,Male,4 years,"{'Vietnamese': 'Native', 'English': 'Toeic 600'}","['Python', 'SQL', 'Bash Script']"
+Do Xuan H,Viet Nam,2002,Male,,,"['Java', 'Python', 'Type Script']"
+Bui Manh P,Viet Nam,2000,Male,2 years,"['Vietnamese', 'English']","['Python', 'SQL', 'Bash Script', 'PowerShell']"
+Nguyen Cong Tuan P,Viet Nam,2000,Male,2 years,"{'Vietnamese': 'Native', 'English': 'IELTS 6.5'}","{'Python': 'Low', 'Bash Script': 'Medium'}"
+Luong Ba H,Viet Nam,2000,Male,,English,"['Java', 'Python', 'Type Script']"
+Hoang Dang K,Viet Nam,1997,Male,5 years,English,"['PHP', 'Python']"
+Mai Thanh L,Viet Nam,1998,Male,,English,Python
+Phuong Xuan T,Viet Nam,1998,Male,,English,"['Java', '.NET', 'Python', 'Angular']"
