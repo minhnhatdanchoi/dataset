@@ -1,4 +1,4 @@
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/0326139bddae88c1f02b83b9d22cff39595a8818/program.csv' AS row
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/f46c95ba4c3e666ef52a6adcd81418d53a97d439/program.csv' AS row
 WITH row, {languages: apoc.text.replace(apoc.text.replace(row.Languages, "None", "null"), "'", "\""), program: apoc.text.replace(apoc.text.replace(row.`Programing Language`, "None", "null"), "'", "\""), tool: apoc.text.replace(apoc.text.replace(row.Tool, "None", "null"), "'", "\""), autotool: apoc.text.replace(apoc.text.replace(row.`Automation/Orchestration tool`, "None", "null"), "'", "\""), microservice: apoc.text.replace(apoc.text.replace(row.Microservice, "None", "null"), "'", "\""), os: apoc.text.replace(apoc.text.replace(row.OS, "None", "null"), "'", "\""), database: apoc.text.replace(apoc.text.replace(row.Database, "None", "null"), "'", "\""), cloud: apoc.text.replace(apoc.text.replace(row.`Public Cloud`, "None", "null"), "'", "\"")} AS transformed // Convert the JSON string to a map
 WITH row, transformed.languages AS langJson, transformed.program AS programJson, transformed.tool AS toolJson, transformed.autotool AS autotoolJson, transformed.microservice AS microserviceJson, transformed.os AS osJson, transformed.database AS databaseJson, transformed.cloud AS cloudJson
 WITH row, apoc.convert.fromJsonMap(langJson) AS langMap, apoc.convert.fromJsonMap(programJson) AS programMap, apoc.convert.fromJsonMap(toolJson) AS toolMap, apoc.convert.fromJsonMap(autotoolJson) AS autotoolMap, apoc.convert.fromJsonMap(microserviceJson) AS microserviceMap, apoc.convert.fromJsonMap(osJson) AS osMap, apoc.convert.fromJsonMap(databaseJson) AS databaseMap, apoc.convert.fromJsonMap(cloudJson) AS cloudMap
@@ -32,7 +32,7 @@ MERGE (e)-[:HAS_LANGUAGE_LEVEL {language: lang}]->(lev)) ///////////////////////
 // Xử lý cột Programing Language
 WITH e, programMap, toolMap, autotoolMap, microserviceMap, osMap, databaseMap, cloudMap
 UNWIND keys(programMap) AS prog
-MERGE (pl:ProgramingLanguage {name: prog})
+MERGE (pl:Technology {name: prog})
 MERGE (e)-[:PROGRAM_LANGUAGE]->(pl)
 WITH e, pl, prog, programMap[prog] AS lvlValue, toolMap, autotoolMap, microserviceMap, osMap, databaseMap, cloudMap
 FOREACH (_ IN
@@ -45,7 +45,7 @@ MERGE (pl)-[:HAS_LEVEL]->(lev)) /////////////////////////////////////
 // Xử lý cột Tool
 WITH e, toolMap, autotoolMap, microserviceMap, osMap, databaseMap, cloudMap
 UNWIND keys(toolMap) AS toolName
-MERGE (t:Tool {name: toolName})
+MERGE (t:Technology {name: toolName})
 MERGE (e)-[:TOOL]->(t)
 WITH e, t, toolName, toolMap[toolName] AS lvlValue, autotoolMap, microserviceMap, osMap, databaseMap, cloudMap
 FOREACH (_ IN
@@ -58,7 +58,7 @@ MERGE (t)-[:HAS_LEVEL]->(lev)) /////////////////////////////////////
 // Xử lý cột Automation/Orchestration tool
 WITH e, autotoolMap, microserviceMap, osMap, databaseMap, cloudMap
 UNWIND keys(autotoolMap) AS atName
-MERGE (at:AutomationTool {name: atName})
+MERGE (at:Technology {name: atName})
 MERGE (e)-[:AUTOTOOL]->(at)
 WITH e, at, atName, autotoolMap[atName] AS lvlValue, microserviceMap, osMap, databaseMap, cloudMap
 FOREACH (_ IN
@@ -71,7 +71,7 @@ MERGE (at)-[:HAS_LEVEL]->(lev)) /////////////////////////////////////
 // Xử lý cột Microservice
 WITH e, microserviceMap, osMap, databaseMap, cloudMap
 UNWIND keys(microserviceMap) AS msName
-MERGE (ms:Microservice {name: msName})
+MERGE (ms:Technology {name: msName})
 MERGE (e)-[:MICROSERVICE]->(ms)
 WITH e, ms, msName, microserviceMap[msName] AS lvlValue, osMap, databaseMap, cloudMap
 FOREACH (_ IN
@@ -84,7 +84,7 @@ MERGE (ms)-[:HAS_LEVEL]->(lev)) /////////////////////////////////////
 // Xử lý cột OS
 WITH e, osMap, databaseMap, cloudMap
 UNWIND keys(osMap) AS osName
-MERGE (os:OS {name: osName})
+MERGE (os:Technology {name: osName})
 MERGE (e)-[:OS]->(os)
 WITH e, os, osName, osMap[osName] AS lvlValue, databaseMap, cloudMap
 FOREACH (_ IN
@@ -97,7 +97,7 @@ MERGE (os)-[:HAS_LEVEL]->(lev)) /////////////////////////////////////
 // Xử lý cột Database
 WITH e, databaseMap, cloudMap
 UNWIND keys(databaseMap) AS dbName
-MERGE (db:Database {name: dbName})
+MERGE (db:Technology {name: dbName})
 MERGE (e)-[:DATABASE]->(db)
 WITH e, db, dbName, databaseMap[dbName] AS lvlValue, cloudMap
 FOREACH (_ IN
@@ -110,7 +110,7 @@ MERGE (db)-[:HAS_LEVEL]->(lev)) /////////////////////////////////////
 // Xử lý cột Public Cloud
 WITH e, cloudMap
 UNWIND keys(cloudMap) AS cloudName
-MERGE (c:Cloud {name: cloudName})
+MERGE (c:Technology {name: cloudName})
 MERGE (e)-[:CLOUD]->(c)
 WITH e, c, cloudName, cloudMap[cloudName] AS lvlValue
 FOREACH (_ IN
@@ -121,25 +121,29 @@ END |
 MERGE (lev:Level {name: lvlValue})
 MERGE (c)-[:HAS_LEVEL]->(lev))
 
-// PROJECT EXP
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/2b3c512f3131f249dfbc316e5334d69561fe3af4/program1.csv' AS row
+//
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/f46c95ba4c3e666ef52a6adcd81418d53a97d439/program.csv' AS row
+MERGE (a:About{type: row.About})
+MERGE (e:Employee {name: row.Name})
+MERGE (e)-[:HAS_ABOUT]->(a)
+
+//xu ly project
+// Project
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/b5c2e8bac73dc45b87f47b44ae820514af8c7731/program1.csv' AS row
 WITH row
 WHERE row.`Projects Experience` IS NOT NULL
   AND row.`Projects Experience` <> '[]'
-MERGE (p:Person {name: row.Name})
-WITH row, p,
-     replace(replace(row.`Projects Experience`, "'", "\""), "None", "null") AS rawJson
-// Nếu có các dấu nháy đôi không được escape trong value của responsibilities,
-// bạn cần xử lý thêm. Ví dụ: thay thế chuỗi "Momo"s thành "Momo\\"s"
-// (Chỉnh sửa dòng sau cho phù hợp với các trường hợp bạn gặp phải)
-WITH p, apoc.text.replace(rawJson, 'Momo"s', 'Momo\\"s') AS fixedJson
-WITH p, apoc.convert.fromJsonList(fixedJson) AS projects
+MERGE (e:Employee {name: row.Name})
+WITH row, e, apoc.convert.fromJsonList(replace(replace(row.`Projects Experience`, "'", "\""), "None", "null")) AS projects
 UNWIND projects AS project
-WITH p, project
+WITH e, project
 WHERE project.`project name` IS NOT NULL
 MERGE (proj:Project {name: project.`project name`})
 SET proj.customer = project.customer,
     proj.position = project.position,
-    proj.responsibilities = project.responsibilities,
-    proj.technologiesUsed = project.`technologies used`
-MERGE (p)-[:WORKED_ON]->(proj);
+    proj.responsibilities = project.responsibilities
+MERGE (e)-[:WORKED_ON]->(proj)
+WITH proj, project
+UNWIND project.`technologies used` AS tech
+MERGE (t:Technology {name: tech})
+MERGE (proj)-[:USES]->(t);
