@@ -120,3 +120,26 @@ CASE
 END |
 MERGE (lev:Level {name: lvlValue})
 MERGE (c)-[:HAS_LEVEL]->(lev))
+
+// PROJECT EXP
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/2b3c512f3131f249dfbc316e5334d69561fe3af4/program1.csv' AS row
+WITH row
+WHERE row.`Projects Experience` IS NOT NULL
+  AND row.`Projects Experience` <> '[]'
+MERGE (p:Person {name: row.Name})
+WITH row, p,
+     replace(replace(row.`Projects Experience`, "'", "\""), "None", "null") AS rawJson
+// Nếu có các dấu nháy đôi không được escape trong value của responsibilities,
+// bạn cần xử lý thêm. Ví dụ: thay thế chuỗi "Momo"s thành "Momo\\"s"
+// (Chỉnh sửa dòng sau cho phù hợp với các trường hợp bạn gặp phải)
+WITH p, apoc.text.replace(rawJson, 'Momo"s', 'Momo\\"s') AS fixedJson
+WITH p, apoc.convert.fromJsonList(fixedJson) AS projects
+UNWIND projects AS project
+WITH p, project
+WHERE project.`project name` IS NOT NULL
+MERGE (proj:Project {name: project.`project name`})
+SET proj.customer = project.customer,
+    proj.position = project.position,
+    proj.responsibilities = project.responsibilities,
+    proj.technologiesUsed = project.`technologies used`
+MERGE (p)-[:WORKED_ON]->(proj);
