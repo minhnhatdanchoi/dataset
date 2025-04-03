@@ -8,7 +8,7 @@ from torch_geometric.data import Data
 import re
 
 # 🔗 Kết nối đến Neo4j
-NEO4J_URI = "neo4j+ssc://fa2fd127.databases.neo4j.io"
+NEO4J_URI = "neo4j+s://fa2fd127.databases.neo4j.io"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "k6y0bLBbHmLw5g-lopuQFKvIsEvjyTig7Y2r-p7aPOc"
 
@@ -55,6 +55,49 @@ while len(negative_edges) < len(positive_edges):
 y = torch.cat([torch.ones(len(positive_edges)), torch.zeros(len(negative_edges))])
 edge_index = torch.tensor(positive_edges + negative_edges, dtype=torch.long).t().contiguous()
 data.edge_index = edge_index
+
+
+# 📌 Hàm tính toán độ tin cậy của quan hệ
+def calculate_confidence(prediction_score, entity_text, about_text):
+    # Tham số trọng số
+    alpha = 0.2  # Trọng số cho điểm dự đoán từ GraphSAGE
+    beta = 0.4  # Trọng số cho độ cụ thể của entity
+    gamma = 0.4  # Trọng số cho ngữ cảnh
+
+    # Đo lường độ cụ thể (specificity) của entity
+    # Càng dài và chi tiết càng cụ thể
+    specificity_score = min(1.0, len(entity_text.split()) / 10)
+
+    # Đo lường chất lượng ngữ cảnh xung quanh entity
+    # Tìm vị trí của entity trong about_text
+    try:
+        entity_pos = about_text.find(entity_text)
+        if entity_pos >= 0:
+            # Lấy 20 ký tự trước và sau entity để đánh giá ngữ cảnh
+            start = max(0, entity_pos - 20)
+            end = min(len(about_text), entity_pos + len(entity_text) + 20)
+            context = about_text[start:end]
+
+            # Đánh giá ngữ cảnh dựa trên số từ khóa quan trọng xuất hiện
+            context_keywords = ["experience", "expert", "skill", "proficient",
+                                "knowledge", "worked", "years", "project",
+                                "expertise"]
+            keyword_count = sum(1 for keyword in context_keywords if
+                                keyword.lower() in context.lower())
+            context_score = min(1.0, keyword_count / 3)
+        else:
+            context_score = 0.0
+    except:
+        context_score = 0.0
+
+    # Tính tổng điểm tin cậy theo công thức
+    confidence = alpha * prediction_score + beta * specificity_score + gamma * context_score
+
+    return confidence, {
+        "prediction": prediction_score,
+        "specificity": specificity_score,
+        "context": context_score
+    }
 
 # 📌 Định nghĩa mô hình GraphSAGE
 class LinkPredictor(nn.Module):
@@ -115,14 +158,18 @@ def extract_entities(about_text):
         "expertise": expertise
     }
 
+
 # 📌 Hiển thị quan hệ rõ ràng hơn
 print("\n🔍 Quan hệ ẩn mới được phát hiện:")
 if not predicted_edges:
     print("⚠ Không tìm thấy quan hệ ẩn nào")
 else:
-    for src, tgt in predicted_edges:
+    for idx, (src, tgt) in enumerate(predicted_edges):
         src_name = id_to_name.get(src, f"Node {src}")
         tgt_name = id_to_name.get(tgt, f"Node {tgt}")
+
+        # Lấy điểm dự đoán từ mô hình
+        pred_score = predictions[idx].item()
 
         # Kiểm tra nếu About là None hoặc rỗng
         if tgt_name is None or tgt_name.strip() == "":
@@ -133,21 +180,35 @@ else:
         entities = extract_entities(tgt_name)
         if entities["skills"] or entities["projects"] or entities["expertise"]:
             for skill in entities["skills"]:
-                print(f"🛠️ {src_name} -> {skill} (HAS_SKILL)")
+                confidence, details = calculate_confidence(pred_score, skill,
+                                                           tgt_name)
+                if confidence > 0.6:  # Chỉ giữ lại các quan hệ có độ tin cậy cao
+                    print(
+                        f"🛠️ {src_name} -> {skill} (HAS_DETAIL_EXPERIENCE) [Confidence: {confidence:.2f}]")
+
             for project in entities["projects"]:
-                print(f"🛠️ {src_name} -> {project} (WORKED_ON)")
+                confidence, details = calculate_confidence(pred_score, project,
+                                                           tgt_name)
+                if confidence > 0.6:
+                    print(
+                        f"🛠️ {src_name} -> {project} (WORKED_ON) [Confidence: {confidence:.2f}]")
+
             for exp in entities["expertise"]:
-                print(f"🛠️ {src_name} -> {exp} (EXPERTISE)")
+                confidence, details = calculate_confidence(pred_score, exp,
+                                                           tgt_name)
+                if confidence > 0.6:
+                    print(
+                        f"🛠️ {src_name} -> {exp} (EXPERTISE) [Confidence: {confidence:.2f}]")
         else:
             print(f"⚠ {src_name} -> Không tìm thấy thực thể nào (BỎ QUA)")
-
 
 # 7️⃣ Cập nhật quan hệ vào Neo4j
 if predicted_edges:
     print("\n📡 Cập nhật vào Neo4j...")
-    for src, tgt in predicted_edges:
+    for idx, (src, tgt) in enumerate(predicted_edges):
         src_name = id_to_name.get(src, f"Node {src}")
         tgt_name = id_to_name.get(tgt, f"Node {tgt}")
+        pred_score = predictions[idx].item()
 
         # Nếu About là None hoặc rỗng, bỏ qua
         if tgt_name is None or tgt_name.strip() == "":
@@ -158,21 +219,39 @@ if predicted_edges:
         relationships = []
 
         if entities["skills"]:
-            relationships.extend([(src_name, "HAS_SKILL", skill) for skill in entities["skills"]])
+            for skill in entities["skills"]:
+                confidence, _ = calculate_confidence(pred_score, skill,
+                                                     tgt_name)
+                if confidence > 0.6:
+                    relationships.append(
+                        (src_name, "HAS_DETAIL_EXPERIENCE", skill, confidence))
+
         if entities["projects"]:
-            relationships.extend([(src_name, "WORKED_ON", project) for project in entities["projects"]])
+            for project in entities["projects"]:
+                confidence, _ = calculate_confidence(pred_score, project,
+                                                     tgt_name)
+                if confidence > 0.6:
+                    relationships.append(
+                        (src_name, "WORKED_ON", project, confidence))
+
         if entities["expertise"]:
-            relationships.extend([(src_name, "EXPERTISE", exp) for exp in entities["expertise"]])
+            for exp in entities["expertise"]:
+                confidence, _ = calculate_confidence(pred_score, exp, tgt_name)
+                if confidence > 0.6:
+                    relationships.append(
+                        (src_name, "EXPERTISE", exp, confidence))
 
         # Chèn vào Neo4j
-        for (source, relation, target) in relationships:
+        for (source, relation, target, conf) in relationships:
             cypher_query = f"""
             MERGE (e:Employee {{name: '{source}'}})
-            MERGE (t:Entity {{name: '{target}'}})
-            MERGE (e)-[:{relation}]->(t)
+            MERGE (t:Detail_Exp {{name: '{target}'}})
+            MERGE (e)-[r:{relation}]->(t)
+            SET r.confidence = {conf}
             """
             graph.run(cypher_query)
-            print(f"✅ {source} -[:{relation}]-> {target} đã được thêm vào Neo4j")
+            print(
+                f"✅ {source} -[:{relation} (conf:{conf:.2f})]-> {target} đã được thêm vào Neo4j")
 
     print("🎯 Cập nhật hoàn tất!")
 else:
