@@ -8,9 +8,9 @@ from torch_geometric.nn import GraphSAGE
 from torch_geometric.data import Data
 
 # 🔗 Connect to Neo4j
-NEO4J_URI = "neo4j+s://fa2fd127.databases.neo4j.io"
+NEO4J_URI = "neo4j+s://890a15f5.databases.neo4j.io"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "k6y0bLBbHmLw5g-lopuQFKvIsEvjyTig7Y2r-p7aPOc"
+NEO4J_PASSWORD = "NV_XHqxDtbfaxIrqbRTlJCXjUwQSipP1nN1r60VHHhw"
 
 try:
   graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
@@ -72,7 +72,7 @@ train_y = y  # Y labels for training edges
 class LinkPredictor(nn.Module):
   def __init__(self, in_channels, hidden_channels):
     super().__init__()
-    self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=2)
+    self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=100)
     self.mlp = nn.Sequential(
         nn.Linear(hidden_channels * 2, 128),
         nn.ReLU(),
@@ -135,7 +135,9 @@ ENTITY_PATTERNS = {
     r'(senior\s+[\w\s,\.]+)',
     r'(junior\s+[\w\s,\.]+)',
     r'(lead\s+[\w\s,\.]+)',
-    r'([\w\s,\.]+\s+with\s+\d+\+?\s+years\s+of\s+experience)'
+    r'([\w\s,\.]+\s+with\s+\d+\+?\s+years\s+of\s+experience)',
+    r'\b\d+\s+years?\b',
+    r'\b\d+\s+year?\b'
   ]
 }
 
@@ -194,14 +196,14 @@ def calculate_confidence(prediction_score, entity_text, about_text,
       'Experience': ["worked", "position", "role", "job", "company"],
       'Project': ["project", "worked on", "involved in", "developed"],
       'Technology': ["technology", "familiar", "worked with", "experience in",
-                     "knowledge"],
-      'Seniority': ["years", "year", "senior", "junior", "lead"]
+                     "knowledge","Python", "Java", "C++", "JavaScript", "SQL","AWS", "Azure", "GCP", "Docker", "Kubernetes","Windows", "Linux", "macOS","HTML", "CSS", "React", "Angular", "Node.js","Ruby", "PHP", "Swift", "Go","TensorFlow", "PyTorch", "scikit-learn","Hadoop", "Spark", "Kafka","MongoDB", "PostgreSQL", "MySQL"],
+      'Seniority': ["years", "year", "senior", "junior", "lead","1", "2", "3", "4", "5","6", "7", "8", "9", "10", "11", "12", "13", "14", "15","16", "17", "18", "19", "20"]
     }
 
     # Use appropriate keywords or fallback to general ones
     keywords = context_keywords.get(entity_type,
                                     ["experience", "skill", "worked",
-                                     "knowledge"])
+                                     "knowledge", "years"])
 
     # Count keyword occurrences in context
     keyword_count = sum(
@@ -223,13 +225,13 @@ def determine_relationship_type(source_type, target_type):
   """Determine relationship type based on source and target node types."""
   if source_type == 'Employee':
     if target_type == 'Skill':
-      return 'HAS_SKILL'
+      return 'HAS_DETAIL_SKILL'
     elif target_type == 'Technology':
-      return 'USES'
+      return 'DETAIL_EX_TECHNOLOGY'
     elif target_type == 'Experience':
       return 'WORKED_AS'
     elif target_type == 'Seniority':
-      return 'HAS_SENIORITY'
+      return 'HAS_SENIORITY_TECHNOLOGY'
     elif target_type == 'Project':
       return 'WORKED_ON'
 
