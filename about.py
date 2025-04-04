@@ -35,7 +35,7 @@ else:
 # 📌 Chuyển đổi dữ liệu sang tensor
 edge_index = torch.tensor(result[['source', 'target']].values, dtype=torch.long).t().contiguous()
 n_nodes = max(edge_index.flatten()).item() + 1
-x = torch.randn(n_nodes, 16)  # Random feature vector cho mỗi node
+x = torch.randn(n_nodes, 128)  # Random feature vector cho mỗi node
 data = Data(x=x, edge_index=edge_index)
 
 # 📌 Tạo từ điển ánh xạ ID -> Tên thực thể
@@ -105,9 +105,9 @@ class LinkPredictor(nn.Module):
         super().__init__()
         self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=2)
         self.mlp = nn.Sequential(
-            nn.Linear(hidden_channels * 2, 16),
+            nn.Linear(hidden_channels * 2, 128),
             nn.ReLU(),
-            nn.Linear(16, 1)
+            nn.Linear(128, 1)
         )
 
     def forward(self, data):
@@ -116,7 +116,7 @@ class LinkPredictor(nn.Module):
         return self.mlp(edge_embeds).squeeze()
 
 # 📌 Huấn luyện mô hình
-model = LinkPredictor(in_channels=16, hidden_channels=32)
+model = LinkPredictor(in_channels=128, hidden_channels=256)
 optimizer = optim.Adam(model.parameters(), lr=0.01)
 criterion = nn.BCEWithLogitsLoss()
 
