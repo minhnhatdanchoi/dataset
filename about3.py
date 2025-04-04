@@ -1,3 +1,4 @@
+"""so sánh với dùng ChatGPT"""
 from py2neo import Graph
 import torch
 import torch.nn as nn
