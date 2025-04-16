@@ -1,17 +1,21 @@
-"""so sánh với dùng ChatGPT"""
+"""
+so sánh với dùng ChatGPT
+so sánh với bản trước
+"""
 from py2neo import Graph
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import random
 import re
+from neo4j import GraphDatabase
 from torch_geometric.nn import GraphSAGE
 from torch_geometric.data import Data
 
 # 🔗 Connect to Neo4j
-NEO4J_URI = "neo4j+s://890a15f5.databases.neo4j.io"
+NEO4J_URI = "neo4j+s://fa2fd127.databases.neo4j.io"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "NV_XHqxDtbfaxIrqbRTlJCXjUwQSipP1nN1r60VHHhw"
+NEO4J_PASSWORD = "k6y0bLBbHmLw5g-lopuQFKvIsEvjyTig7Y2r-p7aPOc"
 
 try:
   graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
@@ -41,7 +45,7 @@ else:
 edge_index = torch.tensor(result[['source', 'target']].values,
                           dtype=torch.long).t().contiguous()
 n_nodes = max(edge_index.flatten()).item() + 1
-x = torch.randn(n_nodes, 128)  # Random feature vector for each node
+x = torch.randn(n_nodes, 64)  # Random feature vector for each node
 data = Data(x=x, edge_index=edge_index)
 
 # 📌 Create ID to entity mapping dictionaries
@@ -73,11 +77,11 @@ train_y = y  # Y labels for training edges
 class LinkPredictor(nn.Module):
   def __init__(self, in_channels, hidden_channels):
     super().__init__()
-    self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=100)
+    self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=3)
     self.mlp = nn.Sequential(
-        nn.Linear(hidden_channels * 2, 128),
+        nn.Linear(hidden_channels * 2, 64),
         nn.ReLU(),
-        nn.Linear(128, 1)
+        nn.Linear(64, 1)
     )
 
   def forward(self, x, edge_index):
@@ -91,7 +95,7 @@ class LinkPredictor(nn.Module):
 
 
 # 📌 Train the model
-model = LinkPredictor(in_channels=128, hidden_channels=256)
+model = LinkPredictor(in_channels=64, hidden_channels=64)
 optimizer = optim.Adam(model.parameters(), lr=0.01)
 criterion = nn.BCEWithLogitsLoss()
 
@@ -109,17 +113,38 @@ for epoch in range(100):
 # 📌 Define entity extraction patterns for different entity types
 ENTITY_PATTERNS = {
   'Skill': [
-    r'(\d+\+?\s+years?\s+(?:of\s+)?experience\s+(?:in|with)\s+[\w\s,\.]+)',
-    r'(proficient\s+(?:in|with)\s+[\w\s,\.]+)',
-    r'(skilled\s+(?:in|with)\s+[\w\s,\.]+)',
-    r'(knowledge\s+of\s+[\w\s,\.]+)'
+    r'((?:skilled|proficient|expert|experienced|knowledge|know how|hands-on experience)\s+(?:in|with|of)\s+[\w\s,\.\-]+)',
+    r'(responsible|dedicated|proactive|get along with everyone)',
+    r'(database management|software test(?:er|ing)|web (?:and|&) mobile (?:application )?development)',
+    r'(implementing\s+[\w\s,\.\-]+)',
+    r'(configuring\s+[\w\s,\.\-]+)',
+    r'(deploying\s+[\w\s,\.\-]+)',
+    r'(managing\s+[\w\s,\.\-]+)',
+    r'(creating\s+[\w\s,\.\-]+)'
   ],
   'Technology': [
-    r'(experience\s+(?:in|with)\s+[\w\s,\.#]+)',
-    r'(worked\s+with\s+[\w\s,\.#]+)',
-    r'(familiar\s+with\s+[\w\s,\.#]+)',
-    r'([\w\s,\.#]+\s+developer)',
-    r'([\w\s,\.#]+\s+programming)'
+    # Programming Languages
+    r'\b(Python|Java|C\+\+|JavaScript|TypeScript|SQL|Ruby|PHP|Go|Swift|Kotlin|Scala|R|MATLAB|Perl|Shell|Bash|PowerShell|HTML|CSS|C#|Objective-C|Assembly|Rust|Dart|Lua|Haskell|Elixir|Clojure|Groovy|F#|C)\b',
+    # Tools
+    r'\b(Git|SVN|Jira|Redmine|Trello|Asana|Confluence|Slack|Teams|Grafana|Jenkins|CircleCI|Travis|SonarQube|Postman|Swagger|Kibana|Logstash|IntelliJ|VSCode|Eclipse|Xcode|Figma|Sketch|Photoshop|Illustrator)\b',
+    # Automation Tools
+    r'\b(Ansible|Puppet|Chef|Terraform|CloudFormation|Jenkins|GitHub Actions|GitLab CI|Bamboo|ArgoCD|Spinnaker|Azure DevOps|Kubernetes|Docker|Selenium|Cypress|Pytest|JUnit|TestNG|Mocha|Jest|CI\/CD|automation test)\b',
+    # Microservices
+    r'\b(Microservices|API Gateway|Service Mesh|Istio|Envoy|gRPC|REST|GraphQL|Kafka|RabbitMQ|ActiveMQ|NATS|ZeroMQ|etcd|Consul|Eureka|Ribbon|Hystrix|Resilience4j)\b',
+    # OS
+    r'\b(Linux|Ubuntu|Debian|CentOS|RHEL|Fedora|Windows|Windows Server|macOS|iOS|Android|Unix|FreeBSD|OpenBSD|Chrome OS|Operation System|Operating System)\b',
+    # Databases
+    r'\b(MySQL|PostgreSQL|Oracle|SQL Server|MongoDB|Cassandra|Redis|Elasticsearch|Neo4j|DynamoDB|Cosmos DB|Firebase|Firestore|CouchDB|MariaDB|SQLite|InfluxDB|TimescaleDB|Snowflake|BigQuery|Redshift)\b',
+    # Cloud
+    r'\b(AWS|Amazon Web Services|EC2|S3|Lambda|ECS|EKS|RDS|DynamoDB|CloudFront|Route53|IAM|Azure|Microsoft Azure|VM|Blob Storage|Functions|AKS|SQL Database|Cosmos DB|GCP|Google Cloud|Compute Engine|Cloud Storage|Cloud Functions|GKE|BigQuery|Cloud SQL|Heroku|Digital Ocean|Alibaba Cloud|IBM Cloud|cloud(?:-based)?(?:\s+platforms)?|cloud platforms)\b',
+    # Frameworks
+    r'\b(Spring|Spring Boot|Django|Flask|Rails|Angular|React|Vue|Laravel|Symphony|Express|ASP\.NET|jQuery|Bootstrap|TensorFlow|PyTorch|Keras|scikit-learn|Hadoop|Spark|Apache Spark)\b',
+    r'(Spring FrameWork)',
+    # Platforms
+    r'(Bidata platform|big data technologies)'
+  ],
+  'Experience_Level': [
+    r'(\d+\+?\s*years?\s+(?:of\s+)?experience\s+(?:in|with|of)\s+[\w\s,\.\-]+)'
   ],
   'Project': [
     r'(worked\s+on\s+[\w\s,\.]+\s+project)',
@@ -127,20 +152,143 @@ ENTITY_PATTERNS = {
     r'(implemented\s+[\w\s,\.]+)',
     r'(project\s+(?:called|named)\s+[\w\s,\.]+)'
   ],
-  'Experience': [
-    r'(worked\s+(?:at|for)\s+[\w\s,\.]+)',
-    r'(position\s+(?:as|of)\s+[\w\s,\.]+)',
-    r'([\w\s,\.]+\s+role\s+at\s+[\w\s,\.]+)'
+  'Industry': [
+    r'(experience\s+in\s+the\s+[\w\s,\.\-]+(?:industry|field))',
+    r'(experience\s+in\s+the\s+computer\s+software)'
   ],
-  'Seniority': [
-    r'(senior\s+[\w\s,\.]+)',
-    r'(junior\s+[\w\s,\.]+)',
-    r'(lead\s+[\w\s,\.]+)',
-    r'([\w\s,\.]+\s+with\s+\d+\+?\s+years\s+of\s+experience)',
-    r'\b\d+\s+years?\b',
-    r'\b\d+\s+year?\b'
+  'Soft_Skill': [
+    r'(actively learn|improve from colleagues|willing to contribute|get along with everyone)',
+    r'(responsible|dedicated|proactive)'
   ]
 }
+# Technology categories lookup table
+TECHNOLOGY_CATEGORIES = {
+  # Programming Languages
+  'Python': 'Programming_Language',
+  'Java': 'Programming_Language',
+  'C++': 'Programming_Language',
+  'C': 'Programming_Language',
+  'JavaScript': 'Programming_Language',
+  'Go': 'Programming_Language',
+  'Typescript': 'Programming_Language',
+  'Ruby': 'Programming_Language',
+  'Scala': 'Programming_Language',
+  'Kotlin': 'Programming_Language',
+
+  # Databases
+  'SQL': 'Database',
+  'MySQL': 'Database',
+  'PostgreSQL': 'Database',
+  'MongoDB': 'Database',
+  'Oracle': 'Database',
+  'SQL Server': 'Database',
+  'Elasticsearch': 'Database',
+  'Redis': 'Database',
+  'InfluxDB': 'Database',
+
+  # Tools
+  'Jira': 'Tool',
+  'Redmine': 'Tool',
+  'Grafana': 'Tool',
+  'Git': 'Tool',
+  'Docker': 'Tool',
+  'Kubernetes': 'Tool',
+  'Airflow': 'Tool',
+  'Flask': 'Tool',
+  'Ansible': 'Tool',
+  'Prometheus': 'Tool',
+  'Nagios': 'Tool',
+  'SonarQube': 'Tool',
+  'Nexus': 'Tool',
+
+  # Cloud
+  'AWS': 'Cloud',
+  'Azure': 'Cloud',
+  'GCP': 'Cloud',
+  'Google Cloud': 'Cloud',
+  'cloud platforms': 'Cloud',
+
+  # Automation
+  'CI/CD': 'Automation_Tool',
+  'Terraform': 'Automation_Tool',
+  'ArgoCD': 'Automation_Tool',
+  'CloudFormation': 'Automation_Tool',
+  'Jenkins': 'Automation_Tool',
+  'GitLab CI': 'Automation_Tool',
+  'Tekton': 'Automation_Tool',
+
+  # OS
+  'Linux': 'OS',
+  'Windows': 'OS',
+  'macOS': 'OS',
+  'Operation System': 'OS',
+  'Operating System': 'OS',
+  'Ubuntu': 'OS',
+  'CentOS': 'OS',
+
+  # Microservices
+  'Microservices': 'Microservice',
+  'API Gateway': 'Microservice',
+  'Service Mesh': 'Microservice',
+  'gRPC': 'Microservice',
+
+  # Frameworks
+  'Spring': 'Framework',
+  'Spring Framework': 'Framework',
+  'Spring FrameWork': 'Framework',
+  'Spring Boot': 'Framework',
+  'Apache Spark': 'Framework',
+  'Spark': 'Framework',
+  'Hadoop': 'Framework',
+  'Django': 'Framework',
+  'FastAPI': 'Framework'
+}
+
+
+# 📌 Determine relationship type based on technology category
+def determine_technology_relationship(technology_name):
+    normalized_name = technology_name.strip().lower()
+
+    # First look in explicit mapping
+    for tech, cat in TECHNOLOGY_CATEGORIES.items():
+        if normalized_name == tech.lower():
+            category = cat
+            break
+    else:
+        # If not found, try pattern matching
+        if any(keyword in normalized_name for keyword in ['cloud', 'aws', 'azure', 'gcp']):
+            category = 'Cloud'
+        elif any(keyword in normalized_name for keyword in ['sql', 'db', 'database', 'postgres', 'mongo', 'redis', 'influx']):
+            category = 'Database'
+        elif any(keyword in normalized_name for keyword in ['linux', 'windows', 'ubuntu', 'centos', 'os', 'system']):
+            category = 'OS'
+        elif any(keyword in normalized_name for keyword in ['ci/cd', 'pipeline', 'terraform', 'ansible', 'jenkins', 'argo', 'gitlab']):
+            category = 'Automation_Tool'
+        elif any(keyword in normalized_name for keyword in ['microservice', 'api gateway', 'grpc', 'service mesh']):
+            category = 'Microservice'
+        elif any(keyword in normalized_name for keyword in ['jira', 'redmine', 'grafana', 'git', 'docker', 'kubernetes', 'prometheus']):
+            category = 'Tool'
+        elif any(keyword in normalized_name for keyword in ['spring', 'spark', 'hadoop', 'flask', 'django', 'fastapi']):
+            category = 'Framework'
+        elif any(keyword in normalized_name for keyword in ['python', 'java', 'c++', 'c#', 'go', 'typescript', 'scala', 'ruby']):
+            category = 'Programming_Language'
+        else:
+            category = 'Technology'  # Default fallback
+
+    # Convert category to relationship type
+    relationship_mappings = {
+        'Programming_Language': 'PROGRAM_LANGUAGE',
+        'Database': 'DATABASE',
+        'Tool': 'TOOL',
+        'Cloud': 'CLOUD',
+        'OS': 'OS',
+        'Automation_Tool': 'AUTO_TOOL',
+        'Microservice': 'MICROSERVICE',
+        'Framework': 'FRAMEWORK',
+        'Technology': 'HAS_TECHNOLOGY'  # Default relationship
+    }
+
+    return relationship_mappings.get(category, 'HAS_TECHNOLOGY')
 
 
 # 📌 Improved entity extraction function
@@ -193,12 +341,21 @@ def calculate_confidence(prediction_score, entity_text, about_text,
 
     # Context keywords based on entity type
     context_keywords = {
-      'Skill': ["experience", "expert", "skill", "proficient", "knowledge"],
-      'Experience': ["worked", "position", "role", "job", "company"],
+      'Skill': ["experience", "expert", "skill", "proficient", "knowledge",
+                "know how"],
+      'Programming_Language': ["Python", "Java", "C++", "JavaScript", "SQL",
+                               "code", "develop", "program"],
+      'Tool': ["tool", "use", "using", "Jira", "Redmine", "Grafana", "manage"],
+      'Automation_Tool': ["automation", "CI/CD", "pipeline", "deploy",
+                          "terraform", "kubernetes"],
+      'Microservice': ["microservice", "service", "API", "REST", "gRPC"],
+      'OS': ["OS", "system", "platform", "Linux", "Windows",
+             "Operation System"],
+      'Database': ["database", "DB", "data", "SQL", "NoSQL", "query"],
+      'Cloud': ["cloud", "AWS", "Azure", "GCP", "service"],
+      'Experience_Level': ["years", "year", "experience", "worked", "+"],
       'Project': ["project", "worked on", "involved in", "developed"],
-      'Technology': ["technology", "familiar", "worked with", "experience in",
-                     "knowledge","Python", "Java", "C++", "JavaScript", "SQL","AWS", "Azure", "GCP", "Docker", "Kubernetes","Windows", "Linux", "macOS","HTML", "CSS", "React", "Angular", "Node.js","Ruby", "PHP", "Swift", "Go","TensorFlow", "PyTorch", "scikit-learn","Hadoop", "Spark", "Kafka","MongoDB", "PostgreSQL", "MySQL"],
-      'Seniority': ["years", "year", "senior", "junior", "lead","1", "2", "3", "4", "5","6", "7", "8", "9", "10", "11", "12", "13", "14", "15","16", "17", "18", "19", "20"]
+      'Seniority': ["years", "year", "senior", "junior", "lead"]
     }
 
     # Use appropriate keywords or fallback to general ones
@@ -222,19 +379,26 @@ def calculate_confidence(prediction_score, entity_text, about_text,
 
 
 # 📌 Determine relationship type based on entity types
-def determine_relationship_type(source_type, target_type):
+def determine_relationship_type(source_type, target_type, target_value=None):
   """Determine relationship type based on source and target node types."""
   if source_type == 'Employee':
     if target_type == 'Skill':
       return 'HAS_DETAIL_SKILL'
     elif target_type == 'Technology':
-      return 'DETAIL_EX_TECHNOLOGY'
-    elif target_type == 'Experience':
-      return 'WORKED_AS'
-    elif target_type == 'Seniority':
-      return 'HAS_SENIORITY_TECHNOLOGY'
+      # Use specialized function to determine technology relationship
+      if target_value:
+        return determine_technology_relationship(target_value)
+      return 'HAS_TECHNOLOGY'  # Default if no target value
+    elif target_type == 'Experience_Level':
+      return 'HAS_EXPERIENCE_LEVEL'
     elif target_type == 'Project':
       return 'WORKED_ON'
+    elif target_type == 'Seniority':
+      return 'HAS_SENIORITY'
+    elif target_type == 'Industry':
+      return 'HAS_INDUSTRY_EXPERIENCE'
+    elif target_type == 'Soft_Skill':
+      return 'HAS_SOFT_SKILL'
 
   # Default case
   return 'RELATED_TO'
@@ -258,7 +422,9 @@ for _, row in employees_with_about.iterrows():
   print(f"\n📑 Processing About text for {employee_name}:")
 
   # Extract entities from About text
-  entity_types = ['Skill', 'Technology', 'Project', 'Experience', 'Seniority']
+  entity_types = ['Skill', 'Programming_Language', 'Tool', 'Automation_Tool',
+                'Microservice', 'OS', 'Database', 'Cloud', 'Experience_Level',
+                'Project', 'Seniority']
   extracted_entities = extract_entities(about_text, entity_types)
 
   # Get node embeddings for confidence calculation
@@ -302,12 +468,12 @@ for _, row in employees_with_about.iterrows():
   for rel in new_relationships:
     # Create Cypher query to add the relationship
     cypher_query = f"""
-        MATCH (e:Employee {{name: $employee_name}})
-        MERGE (t:{rel['entity_type']} {{name: $entity_name}})
-        MERGE (e)-[r:{rel['relationship_type']}]->(t)
-        SET r.confidence = $confidence,
-            r.extracted_from = 'about_text'
-        """
+          MATCH (e:Employee {{name: $employee_name}})
+          MERGE (t:{rel['entity_type']} {{name: $entity_name}})
+          MERGE (e)-[r:{rel['relationship_type']}]->(t)
+          SET r.confidence = $confidence,
+              r.extracted_from = 'about_text'
+          """
 
     # Execute the query
     try:
@@ -318,7 +484,7 @@ for _, row in employees_with_about.iterrows():
           confidence=rel['confidence']
       )
       print(
-        f"  ✅ Added: {rel['employee_name']} -[:{rel['relationship_type']} ({rel['confidence']:.2f})]-> {rel['entity_type']}:{rel['entity'][:30]}...")
+          f"  ✅ Added: {rel['employee_name']} -[:{rel['relationship_type']} ({rel['confidence']:.2f})]-> {rel['entity_type']}:{rel['entity'][:30]}...")
     except Exception as e:
       print(f"  ❌ Error adding relationship: {e}")
 
