@@ -1,4 +1,4 @@
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/f46c95ba4c3e666ef52a6adcd81418d53a97d439/program.csv' AS row
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/e2bc0b767757cca89f85f65b3588024e1ca046b1/Data/final_data_raw/program.csv' AS row
 WITH row, {languages: apoc.text.replace(apoc.text.replace(row.Languages, "None", "null"), "'", "\""), program: apoc.text.replace(apoc.text.replace(row.`Programing Language`, "None", "null"), "'", "\""), tool: apoc.text.replace(apoc.text.replace(row.Tool, "None", "null"), "'", "\""), autotool: apoc.text.replace(apoc.text.replace(row.`Automation/Orchestration tool`, "None", "null"), "'", "\""), microservice: apoc.text.replace(apoc.text.replace(row.Microservice, "None", "null"), "'", "\""), os: apoc.text.replace(apoc.text.replace(row.OS, "None", "null"), "'", "\""), database: apoc.text.replace(apoc.text.replace(row.Database, "None", "null"), "'", "\""), cloud: apoc.text.replace(apoc.text.replace(row.`Public Cloud`, "None", "null"), "'", "\"")} AS transformed // Convert the JSON string to a map
 WITH row, transformed.languages AS langJson, transformed.program AS programJson, transformed.tool AS toolJson, transformed.autotool AS autotoolJson, transformed.microservice AS microserviceJson, transformed.os AS osJson, transformed.database AS databaseJson, transformed.cloud AS cloudJson
 WITH row, apoc.convert.fromJsonMap(langJson) AS langMap, apoc.convert.fromJsonMap(programJson) AS programMap, apoc.convert.fromJsonMap(toolJson) AS toolMap, apoc.convert.fromJsonMap(autotoolJson) AS autotoolMap, apoc.convert.fromJsonMap(microserviceJson) AS microserviceMap, apoc.convert.fromJsonMap(osJson) AS osMap, apoc.convert.fromJsonMap(databaseJson) AS databaseMap, apoc.convert.fromJsonMap(cloudJson) AS cloudMap
@@ -122,14 +122,14 @@ MERGE (lev:Level {name: lvlValue})
 MERGE (c)-[:HAS_LEVEL]->(lev))
 
 //
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/f46c95ba4c3e666ef52a6adcd81418d53a97d439/program.csv' AS row
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/e2bc0b767757cca89f85f65b3588024e1ca046b1/Data/final_data_raw/program.csv' AS row
 MERGE (a:About{type: row.About})
 MERGE (e:Employee {name: row.Name})
 MERGE (e)-[:HAS_ABOUT]->(a)
 
 //xu ly project
 // Project
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/b5c2e8bac73dc45b87f47b44ae820514af8c7731/program1.csv' AS row
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/e2bc0b767757cca89f85f65b3588024e1ca046b1/Data/final_data_raw/program.csv' AS row
 WITH row
 WHERE row.`Projects Experience` IS NOT NULL
   AND row.`Projects Experience` <> '[]'

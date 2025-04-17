@@ -1,7 +1,4 @@
-"""
-so sánh với dùng ChatGPT
-so sánh với bản trước
-"""
+
 from py2neo import Graph
 import torch
 import torch.nn as nn
@@ -238,14 +235,22 @@ def extract_entities(about_text, entity_types=None):
 def calculate_confidence(prediction_score, entity_text, about_text,
     entity_type):
   """Calculate confidence for an extracted entity."""
-  # Weight parameters
   if entity_type == 'Technology':
-    alpha = 0.75  # Higher weight for technology prediction
+    alpha = 0.65  # Weight for GraphSAGE prediction
+    beta = 0.2  # Weight for entity specificity
+    gamma = 0.15  # Weight for context quality
+  elif entity_type in ['Skill', 'Soft_Skill']:
+    alpha = 0.4  # Reduce prediction weight for Skill/Soft_Skill
+    beta = 0.3  # Increase specificity weight
+    gamma = 0.3  # Increase context weight
+  elif entity_type == 'Experience_Level':
+    alpha = 0.5  # More balanced for Experience_Level
+    beta = 0.25
+    gamma = 0.25
   else:
-    alpha = 0.6  # Weight for GraphSAGE prediction
-  beta = 0.2  # Weight for entity specificity
-  gamma = 0.2  # Weight for context quality
-
+    alpha = 0.6  # Default weights
+    beta = 0.25
+    gamma = 0.15
   # Measure entity specificity (longer and more detailed is better)
   specificity_score = min(1.0, len(entity_text.split()) / 10)
 
@@ -260,7 +265,6 @@ def calculate_confidence(prediction_score, entity_text, about_text,
     end = min(len(about_text), entity_pos + len(entity_text) + 30)
     context = about_text[start:end]
 
-    # Context keywords based on entity type
     # Context keywords based on entity type
     context_keywords = {
       'Skill': ["experience", "expert", "skill", "proficient", "knowledge",
@@ -290,6 +294,14 @@ def calculate_confidence(prediction_score, entity_text, about_text,
     "specificity": specificity_score,
     "context": context_score
   }
+# 5. Thêm ngưỡng confidence riêng cho từng loại thực thể
+CONFIDENCE_THRESHOLDS = {
+    'Technology': 0.6,
+    'Skill': 0.4,         # Giảm ngưỡng cho Skill
+    'Soft_Skill': 0.4,    # Giảm ngưỡng cho Soft_Skill
+    'Experience_Level': 0.45,
+    'Project': 0.5
+}
 
 # 📌 Determine relationship type based on entity types
 def determine_relationship_type(source_type, target_type):
@@ -447,13 +459,12 @@ for _, row in employees_with_about.iterrows():
 
 
       # Debug
-      print(
-        f"  DEBUG {entity_type}: {entity[:30]} - Confidence: {confidence:.2f}, Prediction: {prediction_score:.2f}, Specificity: {details['specificity']:.2f}, Context: {details['context']:.2f}")
+      #print(
+        #f"  DEBUG {entity_type}: {entity[:30]} - Confidence: {confidence:.2f}, Prediction: {prediction_score:.2f},Specificity: {details['specificity']:.2f}, Context: {details['context']:.2f}")
 
-
-
+      threshold = CONFIDENCE_THRESHOLDS.get(entity_type, 0.6)
       # Only keep relationships with confidence above threshold
-      if confidence > 0.6:
+      if confidence > threshold:
         relationship_type = determine_relationship_type('Employee', entity_type)
         new_relationships.append({
           'employee_name': employee_name,
@@ -467,8 +478,7 @@ for _, row in employees_with_about.iterrows():
         })
 
         print(
-            f"  🔄 {entity_type}: {entity[:50]}{'...' if len(entity) > 50 else ''} [Conf: {confidence:.2f}, Pred: {prediction_score:.2f}]"
-        )
+          f"  🔄 {entity_type}: {entity[:50]}{'...' if len(entity) > 50 else ''} [Conf: {confidence:.2f}, Pred: {prediction_score:.2f}]")
 
   # Add relationships to Neo4j
   for rel in new_relationships:
