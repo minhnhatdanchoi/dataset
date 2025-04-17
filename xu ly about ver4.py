@@ -27,7 +27,7 @@ except Exception as e:
 # 📌 Extract data from Neo4j
 query = """
 MATCH (e:Employee)-[r]->(n)
-WHERE type(r) <> 'HAS_ABOUT' AND any(label IN labels(n) WHERE label IN ['Nationality', 'Language', 'Sex', 'Project', 'Technology', 'Seniority'])
+WHERE type(r) <> 'HAS_ABOUT' AND any(label IN labels(n) WHERE label IN ['Nationality', 'Language', 'Project', 'Technology', 'Seniority'])
 RETURN id(e) AS source, id(n) AS target, e.name AS employee_name, labels(n)[0] AS node_type, n.name AS node_name, type(r) AS relationship_type
 UNION
 MATCH (e:Employee)-[:HAS_ABOUT]->(a:About)
@@ -77,7 +77,7 @@ train_y = y  # Y labels for training edges
 class LinkPredictor(nn.Module):
   def __init__(self, in_channels, hidden_channels):
     super().__init__()
-    self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=3)
+    self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=2)
     self.mlp = nn.Sequential(
         nn.Linear(hidden_channels * 2, 64),
         nn.ReLU(),
@@ -127,6 +127,7 @@ ENTITY_PATTERNS = {
     r'\b(Python|Java|C\+\+|JavaScript|TypeScript|SQL|Ruby|PHP|Go|Swift|Kotlin|Scala|R|MATLAB|Perl|Shell|Bash|PowerShell|HTML|CSS|C#|Objective-C|Assembly|Rust|Dart|Lua|Haskell|Elixir|Clojure|Groovy|F#|C)\b',
     # Tools
     r'\b(Git|SVN|Jira|Redmine|Trello|Asana|Confluence|Slack|Teams|Grafana|Jenkins|CircleCI|Travis|SonarQube|Postman|Swagger|Kibana|Logstash|IntelliJ|VSCode|Eclipse|Xcode|Figma|Sketch|Photoshop|Illustrator)\b',
+    r'\b(Redmine|Grafana|Jira)(?:[,\s]+(?:and\s+)?(Redmine|Grafana|Jira))*\b'
     # Automation Tools
     r'\b(Ansible|Puppet|Chef|Terraform|CloudFormation|Jenkins|GitHub Actions|GitLab CI|Bamboo|ArgoCD|Spinnaker|Azure DevOps|Kubernetes|Docker|Selenium|Cypress|Pytest|JUnit|TestNG|Mocha|Jest|CI\/CD|automation test)\b',
     # Microservices
@@ -152,144 +153,11 @@ ENTITY_PATTERNS = {
     r'(implemented\s+[\w\s,\.]+)',
     r'(project\s+(?:called|named)\s+[\w\s,\.]+)'
   ],
-  'Industry': [
-    r'(experience\s+in\s+the\s+[\w\s,\.\-]+(?:industry|field))',
-    r'(experience\s+in\s+the\s+computer\s+software)'
-  ],
   'Soft_Skill': [
     r'(actively learn|improve from colleagues|willing to contribute|get along with everyone)',
     r'(responsible|dedicated|proactive)'
   ]
 }
-# Technology categories lookup table
-TECHNOLOGY_CATEGORIES = {
-  # Programming Languages
-  'Python': 'Programming_Language',
-  'Java': 'Programming_Language',
-  'C++': 'Programming_Language',
-  'C': 'Programming_Language',
-  'JavaScript': 'Programming_Language',
-  'Go': 'Programming_Language',
-  'Typescript': 'Programming_Language',
-  'Ruby': 'Programming_Language',
-  'Scala': 'Programming_Language',
-  'Kotlin': 'Programming_Language',
-
-  # Databases
-  'SQL': 'Database',
-  'MySQL': 'Database',
-  'PostgreSQL': 'Database',
-  'MongoDB': 'Database',
-  'Oracle': 'Database',
-  'SQL Server': 'Database',
-  'Elasticsearch': 'Database',
-  'Redis': 'Database',
-  'InfluxDB': 'Database',
-
-  # Tools
-  'Jira': 'Tool',
-  'Redmine': 'Tool',
-  'Grafana': 'Tool',
-  'Git': 'Tool',
-  'Docker': 'Tool',
-  'Kubernetes': 'Tool',
-  'Airflow': 'Tool',
-  'Flask': 'Tool',
-  'Ansible': 'Tool',
-  'Prometheus': 'Tool',
-  'Nagios': 'Tool',
-  'SonarQube': 'Tool',
-  'Nexus': 'Tool',
-
-  # Cloud
-  'AWS': 'Cloud',
-  'Azure': 'Cloud',
-  'GCP': 'Cloud',
-  'Google Cloud': 'Cloud',
-  'cloud platforms': 'Cloud',
-
-  # Automation
-  'CI/CD': 'Automation_Tool',
-  'Terraform': 'Automation_Tool',
-  'ArgoCD': 'Automation_Tool',
-  'CloudFormation': 'Automation_Tool',
-  'Jenkins': 'Automation_Tool',
-  'GitLab CI': 'Automation_Tool',
-  'Tekton': 'Automation_Tool',
-
-  # OS
-  'Linux': 'OS',
-  'Windows': 'OS',
-  'macOS': 'OS',
-  'Operation System': 'OS',
-  'Operating System': 'OS',
-  'Ubuntu': 'OS',
-  'CentOS': 'OS',
-
-  # Microservices
-  'Microservices': 'Microservice',
-  'API Gateway': 'Microservice',
-  'Service Mesh': 'Microservice',
-  'gRPC': 'Microservice',
-
-  # Frameworks
-  'Spring': 'Framework',
-  'Spring Framework': 'Framework',
-  'Spring FrameWork': 'Framework',
-  'Spring Boot': 'Framework',
-  'Apache Spark': 'Framework',
-  'Spark': 'Framework',
-  'Hadoop': 'Framework',
-  'Django': 'Framework',
-  'FastAPI': 'Framework'
-}
-
-
-# 📌 Determine relationship type based on technology category
-def determine_technology_relationship(technology_name):
-    normalized_name = technology_name.strip().lower()
-
-    # First look in explicit mapping
-    for tech, cat in TECHNOLOGY_CATEGORIES.items():
-        if normalized_name == tech.lower():
-            category = cat
-            break
-    else:
-        # If not found, try pattern matching
-        if any(keyword in normalized_name for keyword in ['cloud', 'aws', 'azure', 'gcp']):
-            category = 'Cloud'
-        elif any(keyword in normalized_name for keyword in ['sql', 'db', 'database', 'postgres', 'mongo', 'redis', 'influx']):
-            category = 'Database'
-        elif any(keyword in normalized_name for keyword in ['linux', 'windows', 'ubuntu', 'centos', 'os', 'system']):
-            category = 'OS'
-        elif any(keyword in normalized_name for keyword in ['ci/cd', 'pipeline', 'terraform', 'ansible', 'jenkins', 'argo', 'gitlab']):
-            category = 'Automation_Tool'
-        elif any(keyword in normalized_name for keyword in ['microservice', 'api gateway', 'grpc', 'service mesh']):
-            category = 'Microservice'
-        elif any(keyword in normalized_name for keyword in ['jira', 'redmine', 'grafana', 'git', 'docker', 'kubernetes', 'prometheus']):
-            category = 'Tool'
-        elif any(keyword in normalized_name for keyword in ['spring', 'spark', 'hadoop', 'flask', 'django', 'fastapi']):
-            category = 'Framework'
-        elif any(keyword in normalized_name for keyword in ['python', 'java', 'c++', 'c#', 'go', 'typescript', 'scala', 'ruby']):
-            category = 'Programming_Language'
-        else:
-            category = 'Technology'  # Default fallback
-
-    # Convert category to relationship type
-    relationship_mappings = {
-        'Programming_Language': 'PROGRAM_LANGUAGE',
-        'Database': 'DATABASE',
-        'Tool': 'TOOL',
-        'Cloud': 'CLOUD',
-        'OS': 'OS',
-        'Automation_Tool': 'AUTO_TOOL',
-        'Microservice': 'MICROSERVICE',
-        'Framework': 'FRAMEWORK',
-        'Technology': 'HAS_TECHNOLOGY'  # Default relationship
-    }
-
-    return relationship_mappings.get(category, 'HAS_TECHNOLOGY')
-
 
 # 📌 Improved entity extraction function
 def extract_entities(about_text, entity_types=None):
@@ -299,12 +167,62 @@ def extract_entities(about_text, entity_types=None):
 
   entities = {entity_type: [] for entity_type in entity_types}
 
-  # Apply patterns for each requested entity type
-  for entity_type in entity_types:
-    if entity_type in ENTITY_PATTERNS:
-      for pattern in ENTITY_PATTERNS[entity_type]:
-        matches = re.findall(pattern, about_text, re.IGNORECASE)
-        entities[entity_type].extend([match.strip() for match in matches])
+  # Process sentences separately for better context
+  sentences = re.split(r'[.;]',
+                       about_text)  # Split by periods and semicolons only
+  sentences = [s.strip() for s in sentences if s.strip()]
+
+  # Apply patterns for each sentence and requested entity type
+  for sentence in sentences:
+    for entity_type in entity_types:
+      if entity_type in ENTITY_PATTERNS:
+        for pattern in ENTITY_PATTERNS[entity_type]:
+          matches = re.findall(pattern, sentence, re.IGNORECASE)
+          if matches:
+            # Extract individual entities from comma-separated lists
+            for match in matches:
+              if isinstance(match, tuple):  # For regex groups
+                match = match[0]  # Take the first group
+
+              # Handle comma-separated lists of entities
+              if ',' in match:
+                # If it's a comma-separated list, split and process each item
+                split_entities = [m.strip() for m in re.split(r',\s*', match)]
+                for split_entity in split_entities:
+                  # Re-check each split entity against the pattern
+                  if re.search(pattern, split_entity, re.IGNORECASE):
+                    entities[entity_type].append(split_entity)
+              else:
+                entities[entity_type].append(match.strip())
+
+  # Special processing for Experience_Level to extract duration and associated technology
+  if 'Experience_Level' in entity_types and entities['Experience_Level']:
+    refined_experiences = []
+    for exp in entities['Experience_Level']:
+      # Extract years
+      duration_pattern = r'(\d+\+?)\s*years?'
+      duration_match = re.search(duration_pattern, exp, re.IGNORECASE)
+      if duration_match:
+        duration = duration_match.group(1)
+
+        # Try to extract technology/field the experience relates to
+        tech_pattern = r'experience\s+(?:in|with|of)\s+([\w\s,\.\-]+)'
+        tech_match = re.search(tech_pattern, exp, re.IGNORECASE)
+
+        # If no match with standard pattern, try alternate pattern
+        if not tech_match:
+          tech_pattern = r'experience\s+(?:in|with|of)\s+the\s+([\w\s,\.\-]+)'
+          tech_match = re.search(tech_pattern, exp, re.IGNORECASE)
+
+        if tech_match:
+          tech = tech_match.group(1).strip()
+          # Clean up the technology string
+          tech = re.sub(r'[,\.]$', '', tech).strip()
+          refined_experiences.append(f"{duration} years in {tech}")
+        else:
+          refined_experiences.append(f"{duration} years")
+
+    entities['Experience_Level'] = refined_experiences
 
   # Clean up entities (remove duplicates, truncate long entries)
   for entity_type in entity_types:
@@ -321,9 +239,12 @@ def calculate_confidence(prediction_score, entity_text, about_text,
     entity_type):
   """Calculate confidence for an extracted entity."""
   # Weight parameters
-  alpha = 0.7  # Weight for GraphSAGE prediction
+  if entity_type == 'Technology':
+    alpha = 0.75  # Higher weight for technology prediction
+  else:
+    alpha = 0.6  # Weight for GraphSAGE prediction
   beta = 0.2  # Weight for entity specificity
-  gamma = 0.1  # Weight for context quality
+  gamma = 0.2  # Weight for context quality
 
   # Measure entity specificity (longer and more detailed is better)
   specificity_score = min(1.0, len(entity_text.split()) / 10)
@@ -340,22 +261,15 @@ def calculate_confidence(prediction_score, entity_text, about_text,
     context = about_text[start:end]
 
     # Context keywords based on entity type
+    # Context keywords based on entity type
     context_keywords = {
       'Skill': ["experience", "expert", "skill", "proficient", "knowledge",
-                "know how"],
-      'Programming_Language': ["Python", "Java", "C++", "JavaScript", "SQL",
-                               "code", "develop", "program"],
-      'Tool': ["tool", "use", "using", "Jira", "Redmine", "Grafana", "manage"],
-      'Automation_Tool': ["automation", "CI/CD", "pipeline", "deploy",
-                          "terraform", "kubernetes"],
-      'Microservice': ["microservice", "service", "API", "REST", "gRPC"],
-      'OS': ["OS", "system", "platform", "Linux", "Windows",
-             "Operation System"],
-      'Database': ["database", "DB", "data", "SQL", "NoSQL", "query"],
-      'Cloud': ["cloud", "AWS", "Azure", "GCP", "service"],
+                "know how", "skilled", "responsible", "dedicated"],
+      'Technology': ["Python", "Java", "C++", "JavaScript", "SQL","code", "develop", "program", "C","tool", "use", "using", "Jira", "Redmine", "Grafana", "manage","automation", "CI/CD", "pipeline", "deploy","terraform", "kubernetes", "ArgoCD","microservice", "service", "API", "REST", "gRPC","OS", "system", "platform", "Linux", "Windows","Operation System","database", "DB", "data", "SQL", "NoSQL", "query","cloud", "AWS", "Azure", "GCP", "service", "infrastructure","resources","spring", "framework", "hadoop", "spark", "apache","platform", "bidata", "big data"],
       'Experience_Level': ["years", "year", "experience", "worked", "+"],
       'Project': ["project", "worked on", "involved in", "developed"],
-      'Seniority': ["years", "year", "senior", "junior", "lead"]
+      'Soft_Skill': ["learn", "improve", "contribute", "proactive",
+                     "responsible", "dedicated", "get along"]
     }
 
     # Use appropriate keywords or fallback to general ones
@@ -377,36 +291,107 @@ def calculate_confidence(prediction_score, entity_text, about_text,
     "context": context_score
   }
 
-
 # 📌 Determine relationship type based on entity types
-def determine_relationship_type(source_type, target_type, target_value=None):
-  """Determine relationship type based on source and target node types."""
-  if source_type == 'Employee':
-    if target_type == 'Skill':
-      return 'HAS_DETAIL_SKILL'
-    elif target_type == 'Technology':
-      # Use specialized function to determine technology relationship
-      if target_value:
-        return determine_technology_relationship(target_value)
-      return 'HAS_TECHNOLOGY'  # Default if no target value
-    elif target_type == 'Experience_Level':
-      return 'HAS_EXPERIENCE_LEVEL'
-    elif target_type == 'Project':
-      return 'WORKED_ON'
-    elif target_type == 'Seniority':
-      return 'HAS_SENIORITY'
-    elif target_type == 'Industry':
-      return 'HAS_INDUSTRY_EXPERIENCE'
-    elif target_type == 'Soft_Skill':
-      return 'HAS_SOFT_SKILL'
+def determine_relationship_type(source_type, target_type):
+    """Determine relationship type based on source and target node types."""
+    if source_type == 'Employee':
+        if target_type == 'Skill':
+            return 'HAS_DETAIL_SKILL'
+        elif target_type == 'Technology':
+            return 'HAS_TECHNOLOGY'
+        elif target_type == 'Experience_Level':
+            return 'HAS_EXPERIENCE_LEVEL'
+        elif target_type == 'Project':
+            return 'WORKED_ON'
+        elif target_type == 'Industry':
+            return 'HAS_INDUSTRY_EXPERIENCE'
+        elif target_type == 'Soft_Skill':
+            return 'HAS_SOFT_SKILL'
 
-  # Default case
-  return 'RELATED_TO'
+    # Default case
+    return 'RELATED_TO'
 
 
+# Add this function to create temporary node embedding for new entities
+def create_temp_entity_embedding(entity_text, entity_type, node_embeddings):
+  """
+  Create a temporary embedding for a new entity based on similar entities in the graph.
+
+  Args:
+      entity_text: The text of the new entity
+      entity_type: The type of the entity (Technology, Skill, etc.)
+      node_embeddings: The current node embeddings from the model
+
+  Returns:
+      A tensor embedding for the new entity
+  """
+  # Find existing nodes of the same type to use as reference
+  similar_nodes = []
+
+  # Get IDs of existing nodes with the same type
+  for node_id, info in id_to_info.items():
+    if info['type'] == entity_type:
+      # Calculate text similarity (simple word overlap for now)
+      entity_words = set(entity_text.lower().split())
+      node_words = set(info['name'].lower().split())
+
+      # Calculate Jaccard similarity
+      if len(entity_words) > 0 and len(node_words) > 0:
+        intersection = len(entity_words.intersection(node_words))
+        union = len(entity_words.union(node_words))
+        similarity = intersection / union if union > 0 else 0
+
+        similar_nodes.append((node_id, similarity))
+
+  # Sort by similarity (highest first)
+  similar_nodes.sort(key=lambda x: x[1], reverse=True)
+
+  # If we have similar nodes, use weighted average of top 3 as embedding
+  if similar_nodes:
+    # Take top 3 or as many as available
+    top_nodes = similar_nodes[:min(3, len(similar_nodes))]
+
+    # If no similar nodes have similarity > 0, use random embedding
+    if sum(sim for _, sim in top_nodes) == 0:
+      return torch.randn(node_embeddings.shape[1])
+
+    # Calculate weighted average embedding
+    weighted_sum = torch.zeros(node_embeddings.shape[1])
+    total_weight = 0
+
+    for node_id, similarity in top_nodes:
+      if similarity > 0:
+        weighted_sum += node_embeddings[node_id] * similarity
+        total_weight += similarity
+
+    if total_weight > 0:
+      return weighted_sum / total_weight
+
+  # Fallback: Return a random embedding biased towards the average of all entities of this type
+  type_embeddings = [node_embeddings[node_id] for node_id, info in
+                     id_to_info.items()
+                     if info['type'] == entity_type]
+
+  if type_embeddings:
+    # Return random embedding biased towards the average of this type
+    avg_embedding = torch.stack(type_embeddings).mean(dim=0)
+    random_factor = 0.3
+    return avg_embedding * (1 - random_factor) + torch.randn_like(
+      avg_embedding) * random_factor
+
+  # Last resort: completely random embedding
+  return torch.randn(node_embeddings.shape[1])
+
+
+# Now modify the Process About nodes section to use the trained model for prediction
+# Replace the "Process About nodes and extract entities" section with this improved code:
 # 📌 Process About nodes and extract entities
 print("\n🔍 Processing About nodes and extracting entities...")
 employees_with_about = result[result['node_type'] == 'About']
+
+# Get node embeddings from trained model
+with torch.no_grad():
+  node_embeddings = model(data.x, data.edge_index)
 
 for _, row in employees_with_about.iterrows():
   employee_id = row['source']
@@ -422,14 +407,9 @@ for _, row in employees_with_about.iterrows():
   print(f"\n📑 Processing About text for {employee_name}:")
 
   # Extract entities from About text
-  entity_types = ['Skill', 'Programming_Language', 'Tool', 'Automation_Tool',
-                'Microservice', 'OS', 'Database', 'Cloud', 'Experience_Level',
-                'Project', 'Seniority']
+  entity_types = ['Skill', 'Technology', 'Experience_Level', 'Project',
+                  'Soft_Skill']
   extracted_entities = extract_entities(about_text, entity_types)
-
-  # Get node embeddings for confidence calculation
-  with torch.no_grad():
-    node_embeddings = model(data.x, data.edge_index)
 
   # Process each entity type
   new_relationships = []
@@ -441,14 +421,36 @@ for _, row in employees_with_about.iterrows():
     print(f"  Found {len(entities)} {entity_type} entities")
 
     for entity in entities:
-      # Calculate prediction score (using employee embedding)
-      # This is simplified - in a real scenario we would create a temporary node
-      prediction_score = 0.75  # Default confidence from graph structure
+      # Create temporary embedding for the new entity
+      temp_entity_embedding = create_temp_entity_embedding(entity, entity_type,
+                                                           node_embeddings)
+
+      # Get employee embedding
+      employee_embedding = node_embeddings[employee_id]
+
+      # Calculate prediction score using the trained model
+      # We'll concatenate employee and entity embeddings
+      edge_embedding = torch.cat([employee_embedding, temp_entity_embedding],
+                                 dim=0).unsqueeze(0)
+
+      # Use model to predict link probability
+      with torch.no_grad():
+        prediction_score_tensor = torch.sigmoid(
+          model.mlp(edge_embedding).squeeze())
+        prediction_score = prediction_score_tensor.item()
 
       # Calculate overall confidence
       confidence, details = calculate_confidence(
           prediction_score, entity, about_text, entity_type
       )
+
+
+
+      # Debug
+      print(
+        f"  DEBUG {entity_type}: {entity[:30]} - Confidence: {confidence:.2f}, Prediction: {prediction_score:.2f}, Specificity: {details['specificity']:.2f}, Context: {details['context']:.2f}")
+
+
 
       # Only keep relationships with confidence above threshold
       if confidence > 0.6:
@@ -458,22 +460,29 @@ for _, row in employees_with_about.iterrows():
           'entity': entity,
           'entity_type': entity_type,
           'relationship_type': relationship_type,
-          'confidence': confidence
+          'confidence': confidence,
+          'prediction_score': prediction_score,
+          'context_score': details['context'],
+          'specificity_score': details['specificity']
         })
 
         print(
-          f"  🔄 {entity_type}: {entity[:50]}{'...' if len(entity) > 50 else ''} [{confidence:.2f}]")
+            f"  🔄 {entity_type}: {entity[:50]}{'...' if len(entity) > 50 else ''} [Conf: {confidence:.2f}, Pred: {prediction_score:.2f}]"
+        )
 
   # Add relationships to Neo4j
   for rel in new_relationships:
     # Create Cypher query to add the relationship
     cypher_query = f"""
-          MATCH (e:Employee {{name: $employee_name}})
-          MERGE (t:{rel['entity_type']} {{name: $entity_name}})
-          MERGE (e)-[r:{rel['relationship_type']}]->(t)
-          SET r.confidence = $confidence,
-              r.extracted_from = 'about_text'
-          """
+            MATCH (e:Employee {{name: $employee_name}})
+            MERGE (t:{rel['entity_type']} {{name: $entity_name}})
+            MERGE (e)-[r:{rel['relationship_type']}]->(t)
+            SET r.confidence = $confidence,
+                r.prediction_score = $prediction_score,
+                r.context_score = $context_score,
+                r.specificity_score = $specificity_score,
+                r.extracted_from = 'about_text'
+            """
 
     # Execute the query
     try:
@@ -481,10 +490,14 @@ for _, row in employees_with_about.iterrows():
           cypher_query,
           employee_name=rel['employee_name'],
           entity_name=rel['entity'],
-          confidence=rel['confidence']
+          confidence=rel['confidence'],
+          prediction_score=rel['prediction_score'],
+          context_score=rel['context_score'],
+          specificity_score=rel['specificity_score']
       )
       print(
-          f"  ✅ Added: {rel['employee_name']} -[:{rel['relationship_type']} ({rel['confidence']:.2f})]-> {rel['entity_type']}:{rel['entity'][:30]}...")
+          f"  ✅ Added: {rel['employee_name']} -[:{rel['relationship_type']} ({rel['confidence']:.2f})]-> {rel['entity_type']}:{rel['entity'][:30]}..."
+      )
     except Exception as e:
       print(f"  ❌ Error adding relationship: {e}")
 
