@@ -41,7 +41,6 @@ if result.empty:
 else:
   print(f"Found {len(result)} relationships")
 
-
 # 📌 Convert data to tensors
 edge_index = torch.tensor(result[['source', 'target']].values,
                           dtype=torch.long).t().contiguous()
@@ -73,7 +72,6 @@ train_edge_index = torch.tensor(positive_edges + negative_edges,
 data.edge_index = edge_index  # Keep original edges for graph structure
 train_y = y  # Y labels for training edges
 
-
 # 📌 Define GraphSAGE model
 class LinkPredictor(nn.Module):
   def __init__(self, in_channels, hidden_channels):
@@ -93,7 +91,6 @@ class LinkPredictor(nn.Module):
     edge_embeds = torch.cat(
       [x[edge_index_to_predict[0]], x[edge_index_to_predict[1]]], dim=1)
     return self.mlp(edge_embeds).squeeze()
-
 
 # 📌 Train the model
 model = LinkPredictor(in_channels=64, hidden_channels=64)
@@ -159,7 +156,6 @@ ENTITY_PATTERNS = {
     r'(responsible|dedicated|proactive)'
   ]
 }
-
 
 # 📌 Entity extraction function - simplified to only extract entities
 def extract_entities(about_text, entity_types=None):

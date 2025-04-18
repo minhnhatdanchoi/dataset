@@ -91,15 +91,15 @@ train_edge_index = torch.tensor(positive_edges + negative_edges,
 data.edge_index = edge_index  # Keep original edges for graph structure
 train_y = y  # Y labels for training edges
 
-
 # 📌 Define GraphSAGE model
 class LinkPredictor(nn.Module):
     def __init__(self, in_channels, hidden_channels):
         super().__init__()
-        self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=2)
+        self.sage = GraphSAGE(in_channels, hidden_channels, num_layers=2, dropout=0.2)
         self.mlp = nn.Sequential(
             nn.Linear(hidden_channels * 2, 64),
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(64, 1)
         )
 
@@ -111,7 +111,6 @@ class LinkPredictor(nn.Module):
         edge_embeds = torch.cat(
             [x[edge_index_to_predict[0]], x[edge_index_to_predict[1]]], dim=1)
         return self.mlp(edge_embeds).squeeze()
-
 
 # 📌 Train the model
 model = LinkPredictor(in_channels=64, hidden_channels=64)
@@ -257,7 +256,8 @@ def extract_entities(about_text, entity_types=None):
 # 📌 Improved confidence calculation
 def calculate_confidence(prediction_score, entity_text, about_text,
                          entity_type):
-    """Calculate confidence for an extracted entity."""
+    """Calculate confidence for an extracted entity.
+    thay doi trong so sau do chup evidence de so sanh"""
     if entity_type == 'Technology':
         alpha = 0.65  # Weight for GraphSAGE prediction
         beta = 0.2  # Weight for entity specificity
@@ -289,9 +289,10 @@ def calculate_confidence(prediction_score, entity_text, about_text,
         context = about_text[start:end]
 
         # Context keywords based on entity type
+        # Nên ném ra 1 file rồi gọi vào cho gọn code
         context_keywords = {
             'Skill': ["experience", "expert", "skill", "proficient", "knowledge",
-                      "know how", "skilled", "responsible", "dedicated"],
+                      "know", "skilled", "responsible", "dedicated"],
             'Technology': ["Python", "Java", "C++", "JavaScript", "SQL", "code", "develop", "program", "C", "tool",
                            "use", "using", "Jira", "Redmine", "Grafana", "manage", "automation", "CI/CD", "pipeline",
                            "deploy", "terraform", "kubernetes", "ArgoCD", "microservice", "service", "API", "REST",
