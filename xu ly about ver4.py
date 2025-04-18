@@ -1,7 +1,3 @@
-"""
-so sánh với dùng ChatGPT
-so sánh với bản trước
-"""
 from py2neo import Graph
 import torch
 import torch.nn as nn
@@ -71,7 +67,6 @@ train_edge_index = torch.tensor(positive_edges + negative_edges,
                                 dtype=torch.long).t().contiguous()
 data.edge_index = edge_index  # Keep original edges for graph structure
 train_y = y  # Y labels for training edges
-
 
 # 📌 Define GraphSAGE model
 class LinkPredictor(nn.Module):
