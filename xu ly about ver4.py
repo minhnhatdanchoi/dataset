@@ -456,6 +456,24 @@ employees_with_about = result[result['node_type'] == 'About']
 with torch.no_grad():
     node_embeddings = model(data.x, data.edge_index)
 
+# Counters for summary statistics
+total_hidden_nodes_found = 0
+total_hidden_relationships_found = 0
+hidden_nodes_by_type = {
+    'Technology': 0,
+    'Skill': 0,
+    'Soft_Skill': 0,
+    'Experience_Level': 0,
+    'Project': 0
+}
+hidden_relationships_by_type = {
+    'HAS_TECHNOLOGY': 0,
+    'HAS_DETAIL_SKILL': 0,
+    'HAS_SOFT_SKILL': 0,
+    'HAS_EXPERIENCE_LEVEL': 0,
+    'WORKED_ON': 0
+}
+
 for _, row in employees_with_about.iterrows():
     employee_id = row['source']
     about_id = row['target']
@@ -544,6 +562,13 @@ for _, row in employees_with_about.iterrows():
         node_exists = False
         if rel['entity_type'] == 'Technology':
             node_exists = get_existing_technology_node(rel['entity'])
+        else:
+            # Check if the node exists for other entity types
+            check_node_query = f"""
+      MATCH (n:{rel['entity_type']} {{name: $name}})
+      RETURN count(n) > 0 AS exists
+      """
+            node_exists = graph.evaluate(check_node_query, name=rel['entity'])
 
         # Create Cypher query to add the relationship
         # Use MERGE for both the node and relationship to ensure they exist without duplicating
@@ -570,14 +595,23 @@ for _, row in employees_with_about.iterrows():
                 specificity_score=rel['specificity_score']
             )
 
+            # Update statistics counters
+            total_hidden_relationships_found += 1
+            hidden_relationships_by_type[rel['relationship_type']] = hidden_relationships_by_type.get(
+                rel['relationship_type'], 0) + 1
+
+            if not node_exists:
+                total_hidden_nodes_found += 1
+                hidden_nodes_by_type[rel['entity_type']] = hidden_nodes_by_type.get(rel['entity_type'], 0) + 1
+
             # Different message depending on whether the node existed before
-            if rel['entity_type'] == 'Technology' and node_exists:
+            if node_exists:
                 print(
                     f"  ✅ Added relationship to existing node: {rel['employee_name']} -[:{rel['relationship_type']} ({rel['confidence']:.2f})]-> {rel['entity_type']}:{rel['entity'][:30]}..."
                 )
             else:
                 print(
-                    f"  ✅ Added: {rel['employee_name']} -[:{rel['relationship_type']} ({rel['confidence']:.2f})]-> {rel['entity_type']}:{rel['entity'][:30]}..."
+                    f"  ✅ Added new node and relationship: {rel['employee_name']} -[:{rel['relationship_type']} ({rel['confidence']:.2f})]-> {rel['entity_type']}:{rel['entity'][:30]}..."
                 )
 
             # If this is a Technology entity, update our in-memory tracking
@@ -588,5 +622,22 @@ for _, row in employees_with_about.iterrows():
 
         except Exception as e:
             print(f"  ❌ Error adding relationship: {e}")
+
+# Print summary statistics
+print("\n📊 SUMMARY STATISTICS:")
+print(f"Total hidden nodes discovered: {total_hidden_nodes_found}")
+print(f"Total hidden relationships discovered: {total_hidden_relationships_found}")
+
+if total_hidden_nodes_found > 0:
+    print("\nHidden nodes by type:")
+    for node_type, count in hidden_nodes_by_type.items():
+        if count > 0:
+            print(f"  - {node_type}: {count}")
+
+if total_hidden_relationships_found > 0:
+    print("\nHidden relationships by type:")
+    for rel_type, count in hidden_relationships_by_type.items():
+        if count > 0:
+            print(f"  - {rel_type}: {count}")
 
 print("\n🎯 Processing complete!")
