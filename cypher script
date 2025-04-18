@@ -147,3 +147,85 @@ WITH proj, project
 UNWIND project.`technologies used` AS tech
 MERGE (t:Technology {name: tech})
 MERGE (proj)-[:USES]->(t);
+
+// Xử lý cột Certifications
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
+WITH row
+WHERE row.Certifications IS NOT NULL AND row.Certifications <> '[]' AND row.Certifications <> ''
+MERGE (e:Employee {name: row.Name})
+
+// Xử lý trường hợp chuỗi đơn giản (danh sách chuỗi)
+WITH row, e, row.Certifications AS certsString
+WHERE certsString STARTS WITH '['
+
+// Tách chuỗi thành danh sách bằng cách tách chuỗi thủ công
+WITH row, e,
+     substring(certsString, 1, size(certsString)-2) AS cleanString // Loại bỏ [] ở đầu và cuối
+WITH e,
+     split(cleanString, "', '") AS certList // Tách các chứng chỉ dựa trên dấu phẩy
+
+UNWIND certList AS certRaw
+WITH e, CASE
+          WHEN certRaw STARTS WITH "'" THEN substring(certRaw, 1)
+          WHEN certRaw ENDS WITH "'" THEN substring(certRaw, 0, size(certRaw)-1)
+          ELSE certRaw
+        END AS certName
+
+// Loại bỏ nếu là chuỗi rỗng
+WHERE certName <> ''
+
+// Tạo node Certification
+MERGE (c:Certification {name: certName})
+
+// Tạo mối quan hệ HAS_CERTIFICATION
+MERGE (e)-[:HAS_CERTIFICATION]->(c);
+
+// Xử lý cột Edu
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
+WITH row
+WHERE row.Education IS NOT NULL AND row.Education <> '{}' AND row.Education <> ''
+MERGE (e:Employee {name: row.Name})
+
+// Xử lý định dạng từ điển đơn giản
+WITH row, e, row.Education AS eduString
+WHERE eduString STARTS WITH "{'university':" OR eduString STARTS WITH "{'University':"
+
+// Trích xuất thông tin từ chuỗi bằng regex
+WITH e, eduString,
+     apoc.text.regexGroups(eduString, "'university': '([^']*)'") AS uniMatches1,
+     apoc.text.regexGroups(eduString, "'University': '([^']*)'") AS uniMatches2,
+     apoc.text.regexGroups(eduString, "'years': '([^']*)'") AS yearMatches1,
+     apoc.text.regexGroups(eduString, "'Years': '([^']*)'") AS yearMatches2,
+     apoc.text.regexGroups(eduString, "'major': '([^']*)'") AS majorMatches
+
+WITH e,
+     CASE WHEN size(uniMatches1) > 0 THEN uniMatches1[0][1]
+          WHEN size(uniMatches2) > 0 THEN uniMatches2[0][1]
+          ELSE "Unknown" END AS university,
+     CASE WHEN size(yearMatches1) > 0 THEN yearMatches1[0][1]
+          WHEN size(yearMatches2) > 0 THEN yearMatches2[0][1]
+          ELSE null END AS years,
+     CASE WHEN size(majorMatches) > 0 THEN majorMatches[0][1]
+          ELSE null END AS major
+
+WHERE university <> "Unknown"
+
+// Tạo node Institution và mối quan hệ EDUCATED_AT
+MERGE (uni:Institution {name: university})
+
+// Tạo mối quan hệ cơ bản không có thuộc tính
+MERGE (e)-[rel:EDUCATED_AT]->(uni)
+
+// Thiết lập thuộc tính cho mối quan hệ khi có giá trị
+WITH e, rel, years, major
+WHERE years IS NOT NULL OR major IS NOT NULL
+
+// Thiết lập thuộc tính years nếu có
+FOREACH (y IN CASE WHEN years IS NOT NULL THEN [years] ELSE [] END |
+  SET rel.years = y
+)
+
+// Thiết lập thuộc tính major nếu có
+FOREACH (m IN CASE WHEN major IS NOT NULL THEN [major] ELSE [] END |
+  SET rel.major = m
+);
