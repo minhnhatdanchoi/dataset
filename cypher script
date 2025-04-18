@@ -1,4 +1,4 @@
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/e2bc0b767757cca89f85f65b3588024e1ca046b1/Data/final_data_raw/program.csv' AS row
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
 WITH row, {languages: apoc.text.replace(apoc.text.replace(row.Languages, "None", "null"), "'", "\""), program: apoc.text.replace(apoc.text.replace(row.`Programing Language`, "None", "null"), "'", "\""), tool: apoc.text.replace(apoc.text.replace(row.Tool, "None", "null"), "'", "\""), autotool: apoc.text.replace(apoc.text.replace(row.`Automation/Orchestration tool`, "None", "null"), "'", "\""), microservice: apoc.text.replace(apoc.text.replace(row.Microservice, "None", "null"), "'", "\""), os: apoc.text.replace(apoc.text.replace(row.OS, "None", "null"), "'", "\""), database: apoc.text.replace(apoc.text.replace(row.Database, "None", "null"), "'", "\""), cloud: apoc.text.replace(apoc.text.replace(row.`Public Cloud`, "None", "null"), "'", "\"")} AS transformed // Convert the JSON string to a map
 WITH row, transformed.languages AS langJson, transformed.program AS programJson, transformed.tool AS toolJson, transformed.autotool AS autotoolJson, transformed.microservice AS microserviceJson, transformed.os AS osJson, transformed.database AS databaseJson, transformed.cloud AS cloudJson
 WITH row, apoc.convert.fromJsonMap(langJson) AS langMap, apoc.convert.fromJsonMap(programJson) AS programMap, apoc.convert.fromJsonMap(toolJson) AS toolMap, apoc.convert.fromJsonMap(autotoolJson) AS autotoolMap, apoc.convert.fromJsonMap(microserviceJson) AS microserviceMap, apoc.convert.fromJsonMap(osJson) AS osMap, apoc.convert.fromJsonMap(databaseJson) AS databaseMap, apoc.convert.fromJsonMap(cloudJson) AS cloudMap
@@ -121,15 +121,15 @@ END |
 MERGE (lev:Level {name: lvlValue})
 MERGE (c)-[:HAS_LEVEL]->(lev))
 
-//
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/e2bc0b767757cca89f85f65b3588024e1ca046b1/Data/final_data_raw/program.csv' AS row
+//them about
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
 MERGE (a:About{type: row.About})
 MERGE (e:Employee {name: row.Name})
 MERGE (e)-[:HAS_ABOUT]->(a)
 
 //xu ly project
 // Project
-LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/e2bc0b767757cca89f85f65b3588024e1ca046b1/Data/final_data_raw/program.csv' AS row
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
 WITH row
 WHERE row.`Projects Experience` IS NOT NULL
   AND row.`Projects Experience` <> '[]'
@@ -139,11 +139,144 @@ UNWIND projects AS project
 WITH e, project
 WHERE project.`project name` IS NOT NULL
 MERGE (proj:Project {name: project.`project name`})
-SET proj.customer = project.customer,
-    proj.position = project.position,
-    proj.responsibilities = project.responsibilities
-MERGE (e)-[:WORKED_ON]->(proj)
+SET proj.customer = project.customer
+MERGE (e)-[rel:WORKED_ON]->(proj)
+SET rel.position = project.position,
+    rel.responsibilities = project.responsibilities
 WITH proj, project
+WHERE project.`technologies used` IS NOT NULL
 UNWIND project.`technologies used` AS tech
+WITH proj, tech
+WHERE tech IS NOT NULL
 MERGE (t:Technology {name: tech})
 MERGE (proj)-[:USES]->(t);
+
+// Xử lý cột Certifications
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
+WITH row
+WHERE row.Certifications IS NOT NULL AND row.Certifications <> '[]' AND row.Certifications <> ''
+MERGE (e:Employee {name: row.Name})
+
+// PHẦN 1: Xử lý danh sách chứng chỉ dạng chuỗi đơn giản
+WITH row, e, row.Certifications AS certsString
+WHERE certsString STARTS WITH "['AWS" OR certsString STARTS WITH "['ITIL" OR certsString STARTS WITH "['ISTQB" OR certsString STARTS WITH "['PMI" OR certsString STARTS WITH "['Robotics" OR certsString STARTS WITH "['Top" OR certsString STARTS WITH "['Japanese"
+
+// Tách chuỗi thành danh sách bằng cách tách chuỗi thủ công
+WITH e, substring(certsString, 1, size(certsString)-2) AS cleanString
+WITH e, split(cleanString, "', '") AS certList
+
+UNWIND certList AS certRaw
+WITH e, CASE
+          WHEN certRaw STARTS WITH "'" THEN substring(certRaw, 1)
+          WHEN certRaw ENDS WITH "'" THEN substring(certRaw, 0, size(certRaw)-1)
+          ELSE certRaw
+        END AS certName
+
+// Loại bỏ nếu là chuỗi rỗng
+WHERE certName <> ''
+
+// Tạo node Certification
+MERGE (c:Certification {name: certName})
+
+// Tạo mối quan hệ HAS_CERTIFICATION
+MERGE (e)-[:HAS_CERTIFICATION]->(c)
+
+// PHẦN 2: Xử lý danh sách chứng chỉ dạng từ điển
+UNION
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
+WITH row
+WHERE row.Certifications IS NOT NULL AND row.Certifications <> '[]' AND row.Certifications <> ''
+MERGE (e:Employee {name: row.Name})
+
+WITH row, e, row.Certifications AS certsString
+WHERE certsString STARTS WITH "[{" // Nhận diện dạng từ điển
+
+// Sử dụng regex để trích xuất từng từ điển chứng chỉ
+WITH e, certsString,
+     apoc.text.regexGroups(certsString, "\\{([^{}]+)\\}") AS dictMatches
+
+UNWIND dictMatches AS dictMatch
+WITH e, dictMatch[1] AS dictContent
+
+// Trích xuất các trường thông tin từ từ điển
+WITH e, dictContent,
+     apoc.text.regexGroups(dictContent, "'certification': '([^']*)'") AS certMatches,
+     apoc.text.regexGroups(dictContent, "'name': '([^']*)'") AS nameMatches,
+     apoc.text.regexGroups(dictContent, "'validity': '([^']*)'") AS validityMatches,
+     apoc.text.regexGroups(dictContent, "'date': '([^']*)'") AS dateMatches,
+     apoc.text.regexGroups(dictContent, "'years': '([^']*)'") AS yearsMatches
+
+// Lấy tên chứng chỉ từ trường 'certification' hoặc 'name'
+WITH e,
+     CASE WHEN size(certMatches) > 0 THEN certMatches[0][1]
+          WHEN size(nameMatches) > 0 THEN nameMatches[0][1]
+          ELSE null END AS certName,
+     // Lấy thông tin hiệu lực từ 'validity', 'date', hoặc 'years'
+     CASE WHEN size(validityMatches) > 0 THEN validityMatches[0][1]
+          WHEN size(dateMatches) > 0 THEN dateMatches[0][1]
+          WHEN size(yearsMatches) > 0 THEN yearsMatches[0][1]
+          ELSE null END AS validityInfo
+
+WHERE certName IS NOT NULL
+
+// Tạo node Certification
+MERGE (c:Certification {name: certName})
+
+// Tạo mối quan hệ cơ bản
+MERGE (e)-[rel:HAS_CERTIFICATION]->(c)
+
+// Thiết lập thuộc tính validity nếu có
+FOREACH (v IN CASE WHEN validityInfo IS NOT NULL THEN [validityInfo] ELSE [] END |
+  SET rel.validity = v
+);
+
+
+// Xử lý cột Edu
+LOAD CSV WITH HEADERS FROM 'https://raw.githubusercontent.com/minhnhatdanchoi/dataset/33c91d20cce4106b9b45469c2f5938a752279aee/program.csv' AS row
+WITH row
+WHERE row.Education IS NOT NULL AND row.Education <> '{}' AND row.Education <> ''
+MERGE (e:Employee {name: row.Name})
+
+// Xử lý định dạng từ điển đơn giản
+WITH row, e, row.Education AS eduString
+WHERE eduString STARTS WITH "{'university':" OR eduString STARTS WITH "{'University':"
+
+// Trích xuất thông tin từ chuỗi bằng regex
+WITH e, eduString,
+     apoc.text.regexGroups(eduString, "'university': '([^']*)'") AS uniMatches1,
+     apoc.text.regexGroups(eduString, "'University': '([^']*)'") AS uniMatches2,
+     apoc.text.regexGroups(eduString, "'years': '([^']*)'") AS yearMatches1,
+     apoc.text.regexGroups(eduString, "'Years': '([^']*)'") AS yearMatches2,
+     apoc.text.regexGroups(eduString, "'major': '([^']*)'") AS majorMatches
+
+WITH e,
+     CASE WHEN size(uniMatches1) > 0 THEN uniMatches1[0][1]
+          WHEN size(uniMatches2) > 0 THEN uniMatches2[0][1]
+          ELSE "Unknown" END AS university,
+     CASE WHEN size(yearMatches1) > 0 THEN yearMatches1[0][1]
+          WHEN size(yearMatches2) > 0 THEN yearMatches2[0][1]
+          ELSE null END AS years,
+     CASE WHEN size(majorMatches) > 0 THEN majorMatches[0][1]
+          ELSE null END AS major
+
+WHERE university <> "Unknown"
+
+// Tạo node Education và mối quan hệ EDUCATED_AT
+MERGE (uni:Education {name: university})
+
+// Tạo mối quan hệ cơ bản không có thuộc tính
+MERGE (e)-[rel:EDUCATED_AT]->(uni)
+
+// Thiết lập thuộc tính cho mối quan hệ khi có giá trị
+WITH e, rel, years, major
+WHERE years IS NOT NULL OR major IS NOT NULL
+
+// Thiết lập thuộc tính years nếu có
+FOREACH (y IN CASE WHEN years IS NOT NULL THEN [years] ELSE [] END |
+  SET rel.years = y
+)
+
+// Thiết lập thuộc tính major nếu có
+FOREACH (m IN CASE WHEN major IS NOT NULL THEN [major] ELSE [] END |
+  SET rel.major = m
+);
