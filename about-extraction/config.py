@@ -3,9 +3,9 @@ Configuration parameters for the knowledge graph extraction system
 """
 
 # Neo4j connection parameters
-NEO4J_URI = "neo4j+s://fa2fd127.databases.neo4j.io"
+NEO4J_URI = "neo4j+s://2413b494.databases.neo4j.io"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "k6y0bLBbHmLw5g-lopuQFKvIsEvjyTig7Y2r-p7aPOc"
+NEO4J_PASSWORD = "ecPHA_8U14w5h1AXLs2OtEX4gOh3lrHm7Trl6J-k0Bc"
 
 # Model parameters
 MODEL_PARAMS = {
