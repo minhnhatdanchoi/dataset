@@ -7,7 +7,7 @@ This project uses graph neural networks and natural language processing to extra
 The code has been reorganized into a modular structure for better maintainability:
 
 ```
-knowledge-graph-extraction/
+about-extraction/
 ├── main.py                # Main execution script
 ├── config.py              # Configuration parameters
 ├── entity_patterns.py     # Regex patterns for entity extraction
