@@ -40,7 +40,7 @@ def connect_to_neo4j():
 # ============================
 def extract_data_from_neo4j(graph):
     """Extract node and relationship data from Neo4j."""
-    # Query to extract existing relationships
+    # Query để extract existing relationships
     query = """
     MATCH (e:Employee)-[r]->(n)
     WHERE type(r) <> 'HAS_ABOUT' AND any(label IN labels(n) WHERE label IN ['Nationality', 'Language', 'Project', 'Technology', 'Seniority'])
@@ -60,14 +60,14 @@ def extract_data_from_neo4j(graph):
     return result
 
 def extract_existing_technology_relationships(graph):
-    """Extract existing relationships between employees and technology nodes."""
+    """Truy vấn riêng các mối quan hệ giữa nhân viên và công nghệ (Technology)."""
     query = """
     MATCH (e:Employee)-[r]->(t:Technology)
     RETURN e.name AS employee_name, t.name AS technology_name, type(r) AS relationship_type
     """
     existing_tech_relationships = graph.run(query).to_data_frame()
 
-    # Create a dictionary to track existing technology relationships for each employee
+    # Tạo từ điển để theo dõi các mối quan hệ công nghệ hiện có cho mỗi nhân viên
     employee_tech_relationships = {}
     if not existing_tech_relationships.empty:
         for _, row in existing_tech_relationships.iterrows():
